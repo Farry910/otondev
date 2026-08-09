@@ -2,9 +2,9 @@
 
 ```yaml
 id: SP3
-status: claimed
-owner: agent-sess-ec39663a
-claimed_at: 2026-08-09 14:56
+status: todo
+owner: 
+claimed_at: 
 heartbeat: 2026-08-09 14:56
 reviewer: ""
 branch: spike/SP3-ditto-behaviour
@@ -57,3 +57,4 @@ owns: spikes/ditto-behaviour/**
 - 2026-08-09 14:46 | agent-sess-a860aca9 | claimed
 - 2026-08-09 14:47 | agent-sess-a860aca9 | released - Blocked on a Ditto offline licence token; released immediately rather than held idle. See board/requests/2026-08-09-SP3-*.md
 - 2026-08-09 14:56 | agent-sess-ec39663a | claimed
+- 2026-08-09 14:56 | agent-sess-ec39663a | released - Still blocked on DITTO_OFFLINE_LICENSE_TOKEN (3rd auto-claim). See board/requests/2026-08-09-SP3-sp3-needs-a-credential-no-agent-can-obta.md -- 'next' ranks this first among stage-0 and re-claims it after every release, so it will keep being handed out until it is gated or the token exists.
