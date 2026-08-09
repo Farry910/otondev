@@ -2,15 +2,16 @@
 
 ```yaml
 id: S1
-status: todo
-owner: ""
-claimed_at: ""
+status: claimed
+owner: agent-sess-ec39663a
+claimed_at: 2026-08-09 14:57
 branch: svc/S1-ingress
 stage: 1
 depends_on: W0
 gate: none
 gate_cleared: yes
 fake: no
+heartbeat: 2026-08-09 14:57
 ```
 
 **Owns** — `services/ingress/**`, Postgres schema `ingress`
@@ -33,3 +34,4 @@ fake: no
 ## Log
 
 <!-- newest last · `YYYY-MM-DD HH:MM | session | note` -->
+- 2026-08-09 14:57 | agent-sess-ec39663a | claimed
