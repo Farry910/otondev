@@ -2,7 +2,7 @@
 
 ```yaml
 id: W0
-status: claimed
+status: done
 owner: auto-3aed8a
 claimed_at: 2026-08-09 12:00
 branch: wf/W0-foundation
@@ -44,3 +44,4 @@ fake: yes
 - 2026-08-09 12:00 | auto-w0-impl | released - incorrect release+reclaim by impl-w0: liveness check was wrong, auto-3aed8a is alive and building; returning the card
 - 2026-08-09 12:00 | auto-3aed8a | claimed
 - 2026-08-09 13:01 | auto-3aed8a | fake published - downstream may depend on it
+- 2026-08-09 13:03 | auto-3aed8a | done - exit criteria met
