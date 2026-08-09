@@ -23,7 +23,7 @@ heartbeat: 2026-08-09 14:53
 ## Exit criteria
 
 - [x] versioned verifier manifest parser and validator
-- [ ] check execution against the immutable diff and commit
+- [x] check execution against the immutable diff and commit
 - [ ] receives goal, diff, definition of done, and evidence — **never the executor's narrative**
 - [ ] explicit recording of skipped and unavailable checks
 - [ ] verdict plus known limitations; diff, secret, and licence scanning hooks
