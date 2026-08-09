@@ -2,9 +2,9 @@
 
 ```yaml
 id: SP1
-status: claimed
-owner: agent-sess-83866095
-claimed_at: 2026-08-09 13:51
+status: todo
+owner: 
+claimed_at: 
 heartbeat: 2026-08-09 14:08
 reviewer: ""
 branch: spike/SP1-windows-session
@@ -54,3 +54,4 @@ A human reads `FINDINGS.md` and, if the verdict is continue, runs:
 - 2026-08-09 13:03 | agent-bbf05b75 | claimed
 - 2026-08-09 13:19 | agent-bbf05b75 | released - Harness + reconciliation committed on spike/SP1-windows-session (not pushed). 4 sub-questions answered with evidence; the central criterion needs LocalSystem and reboot/logoff need a dedicated machine — see spikes/windows-session/FINDINGS.md. Needs a human decision on where to run it.
 - 2026-08-09 13:51 | agent-sess-83866095 | claimed
+- 2026-08-09 14:29 | agent-sess-83866095 | released - unelevated half complete and pushed (afc5136); 5/8 criteria ticked. Remaining 3 need an administrator: scripts/run-elevated.ps1 installs the LocalSystem service and closes them. FINDINGS.md says CONTINUE but do not clear windows-spike yet.
