@@ -35,7 +35,7 @@ owns: spikes/presence-platform/**
 - [ ] cost per meeting-hour estimated for each candidate, with the assumptions stated
 - [x] the failure modes that would violate the presence SLOs are named per platform
 - [x] `spikes/presence-platform/FINDINGS.md` presents a **comparison and a recommendation**, explicitly marked as input to a human decision, not as the decision
-- [ ] the finding states which S15 exit criteria each candidate can satisfy and which it cannot
+- [x] the finding states which S15 exit criteria each candidate can satisfy and which it cannot
 
 ## Handing the result back
 
