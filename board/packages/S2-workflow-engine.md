@@ -2,15 +2,16 @@
 
 ```yaml
 id: S2
-status: todo
-owner: ""
-claimed_at: ""
+status: claimed
+owner: agent-sess-83866095
+claimed_at: 2026-08-09 14:30
 branch: svc/S2-workflow
 stage: 1
 depends_on: W0
 gate: none
 gate_cleared: yes
 fake: no
+heartbeat: 2026-08-09 14:30
 ```
 
 **Owns** — `services/workflow/**`, Postgres schema `workflow`
@@ -38,3 +39,4 @@ fake: no
 ## Log
 
 <!-- newest last · `YYYY-MM-DD HH:MM | session | note` -->
+- 2026-08-09 14:30 | agent-sess-83866095 | claimed
