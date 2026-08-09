@@ -5,7 +5,7 @@ id: SP3
 status: claimed
 owner: agent-bbf05b75
 claimed_at: 2026-08-09 14:00
-heartbeat: 2026-08-09 14:13
+heartbeat: 2026-08-09 14:14
 reviewer: ""
 branch: spike/SP3-ditto-behaviour
 stage: 0
@@ -34,7 +34,7 @@ owns: spikes/ditto-behaviour/**
 - [ ] deletion and correction propagate to a synced peer, and the peer's index reflects it
 - [ ] collection separation for private vs team-approved data holds under sync
 - [ ] peer authentication behaviour and its failure mode are documented
-- [ ] confirmed in the spike, not assumed: Ditto is unsuitable for work claims, approval uniqueness, fencing, and revocation
+- [x] confirmed in the spike, not assumed: Ditto is unsuitable for work claims, approval uniqueness, fencing, and revocation
 - [ ] `spikes/ditto-behaviour/FINDINGS.md` records a **kill-or-continue verdict**, the exact SDK and version tested, and which `MemoryStore` conformance cases the adapter can satisfy
 
 ## Handing the result back
