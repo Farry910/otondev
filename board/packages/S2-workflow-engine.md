@@ -11,7 +11,7 @@ depends_on: W0
 gate: none
 gate_cleared: yes
 fake: no
-heartbeat: 2026-08-09 14:42
+heartbeat: 2026-08-09 14:51
 ```
 
 **Owns** — `services/workflow/**`, Postgres schema `workflow`
@@ -24,7 +24,7 @@ heartbeat: 2026-08-09 14:42
 
 ## Exit criteria
 
-- [ ] the full state machine from contracts §3, with compare-and-set on `state_version`
+- [x] the full state machine from contracts §3, with compare-and-set on `state_version`
 - [ ] leases carrying owner, expiry, and **fencing token**; timers and wakeups; retry and backoff
 - [ ] a transition event persisted for every state change
 - [ ] compensation hooks and the recovery scan for interrupted attempts
