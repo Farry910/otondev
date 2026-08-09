@@ -33,7 +33,7 @@ owns: spikes/presence-platform/**
 - [ ] a candidate voice path measured for round-trip latency, barge-in / interruption handling, and behaviour on reconnect
 - [x] the data path is documented: what audio or transcript leaves the boundary, to which provider, in which region
 - [ ] cost per meeting-hour estimated for each candidate, with the assumptions stated
-- [ ] the failure modes that would violate the presence SLOs are named per platform
+- [x] the failure modes that would violate the presence SLOs are named per platform
 - [ ] `spikes/presence-platform/FINDINGS.md` presents a **comparison and a recommendation**, explicitly marked as input to a human decision, not as the decision
 - [ ] the finding states which S15 exit criteria each candidate can satisfy and which it cannot
 
