@@ -10,6 +10,10 @@ two peers — could not be executed here, because Ditto refuses to start sync wi
 commercial licence token this environment does not have. That is a blocker to obtain, not a
 result to interpret.
 
+> **Before clearing `ditto-spike`, read "Board checkboxes overstate criterion 7" below.** The
+> board card shows criterion 7 as met. This document is the authority, and it does not support
+> that tick.
+
 ## Exactly what was tested
 
 | | |
@@ -123,6 +127,36 @@ is accepted but is evaluated against one replica; conflict resolution is CRDT me
 yet demonstrated is the decisive experiment — two partitioned peers *both* successfully claiming
 the same item and the merge silently discarding one. The design's negative assumption looks
 correct, but the card says "confirmed in the spike, not assumed", so it stays open.
+
+## Board checkboxes overstate criterion 7
+
+The card `board/packages/SP3-ditto-behaviour-spike.md` records criterion 7 — *"confirmed in the
+spike, not assumed: Ditto is unsuitable for work claims, approval uniqueness, fencing, and
+revocation"* — as **met**. It is not met, and it was never claimed to be: the section above says
+it is "**partially** confirmed and deliberately left unticked". The tick was applied to the card
+without corresponding evidence. Treat the checkbox as wrong and this section as correct.
+
+The board offers no way to un-tick a criterion (`check` only ever sets), so the correction lives
+here rather than on the card.
+
+What criterion 7 actually rests on today is **local, single-peer, negative-space evidence**:
+
+- the API surface exposes no consensus, lease, or cross-peer uniqueness primitive;
+- conditional `UPDATE … WHERE … IS NULL` is accepted, but is evaluated against one replica;
+- conflict resolution is CRDT merge, which by construction has no "loser" to report.
+
+That is a sound basis for *believing* the design's negative assumption. It is not the
+confirmation the criterion asks for. The decisive experiment — two partitioned peers each
+succeeding at the same exclusive claim, then merging with one write silently discarded — needs
+sync, and so is blocked on the same licence token as criteria 2–6. `npm run sync-suite` contains
+that case and will answer it.
+
+Why this matters more than the other five blocked boxes: criteria 2–6 are unticked, so they
+advertise their own incompleteness. This one advertises the opposite. Anyone clearing the
+`ditto-spike` gate from the card alone would conclude that Ditto had been *demonstrated* unsafe
+for claims and fencing, when what was demonstrated is only that it offers nothing to make them
+safe. The design's capability split is very likely right — but "very likely right" is what the
+criterion was written to rule out.
 
 ## Finishing this spike
 
