@@ -2,12 +2,14 @@
 
 ```yaml
 id: S10
-status: blocked
+status: todo
 owner: ""
 claimed_at: ""
 branch: svc/S10-workspace
 stage: 1
-gate: W0 + isolation spike
+depends_on: W0
+gate: isolation-spike
+gate_cleared: no
 fake: no
 ```
 

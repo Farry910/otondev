@@ -2,12 +2,14 @@
 
 ```yaml
 id: S2
-status: blocked
+status: todo
 owner: ""
 claimed_at: ""
 branch: svc/S2-workflow
 stage: 1
-gate: W0
+depends_on: W0
+gate: none
+gate_cleared: yes
 fake: no
 ```
 

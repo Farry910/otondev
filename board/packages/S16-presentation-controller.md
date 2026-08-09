@@ -2,12 +2,14 @@
 
 ```yaml
 id: S16
-status: blocked
+status: todo
 owner: ""
 claimed_at: ""
 branch: svc/S16-companion
 stage: 3
-gate: Windows spike
+depends_on: 
+gate: windows-spike
+gate_cleared: no
 fake: no
 ```
 

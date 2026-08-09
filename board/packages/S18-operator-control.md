@@ -2,12 +2,14 @@
 
 ```yaml
 id: S18
-status: blocked
+status: todo
 owner: ""
 claimed_at: ""
 branch: svc/S18-operator
 stage: 1
-gate: W0-E hooks
+depends_on: W0
+gate: none
+gate_cleared: yes
 fake: no
 ```
 

@@ -2,12 +2,14 @@
 
 ```yaml
 id: S20
-status: blocked
+status: todo
 owner: ""
 claimed_at: ""
 branch: svc/S20-integration
 stage: 1
-gate: 2+ Wave-1 packages landed
+depends_on: W0
+gate: none
+gate_cleared: yes
 fake: n/a
 ```
 

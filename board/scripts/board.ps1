@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Delivery board CLI. Safe for many concurrent sessions.
+    Delivery board CLI. Safe for many concurrent autonomous sessions.
 
 .DESCRIPTION
     Board state lives on origin/main and is NEVER read from or written to a checked-out branch.
@@ -11,22 +11,19 @@
     Writes never check anything out. A checkout would take ~500ms and every millisecond of that is a
     window for another session to land first, which is how a busy board starves a session.
 
-    Consequences that matter when several sessions run at once:
-      * you can run this from any directory, any branch, any worktree
-      * your working tree may be dirty; the board does not care and will not touch it
-      * no shared index, so no index.lock contention between sessions
-      * origin/main is the single serialization point; a rejected push is a lost race and is retried
+    Availability is DERIVED, never stored: a card is available when its status is 'todo', its external
+    gate is cleared, and every card in depends_on is 'done'. So finishing W0 makes Wave 1 claimable with
+    no human step.
 
 .EXAMPLE
-    .\board\scripts\board.ps1 status
-    .\board\scripts\board.ps1 claim S7 -Session "kai-1"
+    .\board\scripts\board.ps1 next                 # pick + claim the best available card, atomically
     .\board\scripts\board.ps1 check S7 -Note "ambiguous timeout"
     .\board\scripts\board.ps1 finish S7
 #>
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [ValidateSet('status', 'list', 'claim', 'release', 'finish', 'fake', 'check', 'block', 'unblock', 'request')]
+    [ValidateSet('next', 'status', 'list', 'claim', 'release', 'finish', 'approve', 'fake', 'check', 'clear-gate', 'request')]
     [string]$Command = 'status',
 
     [Parameter(Position = 1)]
@@ -44,19 +41,18 @@ $ErrorActionPreference = 'Stop'
 # Native git output is decoded using this, so without it every em-dash in a card comes back corrupted.
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
-$Stamp    = Get-Date -Format 'yyyy-MM-dd HH:mm'
-$CardGlob = 'board/packages/'
-$MaxTries = 8
+$Stamp     = Get-Date -Format 'yyyy-MM-dd HH:mm'
+$CardGlob  = 'board/packages/'
+$MaxTries  = 8
+$NeedsReview = '^(S4|S5|S10)$'   # security-critical: finish stops at in-review, never self-approves
 
 # --- git plumbing -----------------------------------------------------------------------------------
 # git writes ordinary progress to stderr. Under $ErrorActionPreference = 'Stop' that becomes a
 # terminating NativeCommandError before any exit-code check runs, so every call goes through here.
-function Invoke-Git([string[]]$GitArgs, [string]$Dir) {
+function Invoke-Git([string[]]$GitArgs) {
     $prev = $ErrorActionPreference
     $ErrorActionPreference = 'Continue'
-    try {
-        if ($Dir) { & git -C $Dir @GitArgs | Out-Null } else { & git @GitArgs | Out-Null }
-    } finally { $ErrorActionPreference = $prev }
+    try { & git @GitArgs | Out-Null } finally { $ErrorActionPreference = $prev }
     return $LASTEXITCODE
 }
 
@@ -68,26 +64,21 @@ function Get-GitOut([string[]]$GitArgs) {
 }
 
 function Write-Text([string]$path, [string]$content) {
-    # LF + UTF-8 without BOM, matching .gitattributes.
     [System.IO.File]::WriteAllText($path, ($content -replace "`r`n", "`n"), (New-Object System.Text.UTF8Encoding($false)))
 }
 
-# --- reading the board (never touches a working tree) -----------------------------------------------
+# --- reading (never touches a working tree) ---------------------------------------------------------
 function Sync-Remote {
     if ((Invoke-Git @('fetch', '--quiet', 'origin', 'main')) -ne 0) {
         Write-Warning 'could not reach origin; showing the last fetched board state'
-        return $false
     }
-    return $true
 }
 
 function Get-CardPaths {
     return @(Get-GitOut @('ls-tree', '--name-only', 'origin/main', $CardGlob) | Where-Object { $_ -like '*.md' })
 }
 
-function Read-Card([string]$path) {
-    return ((Get-GitOut @('show', "origin/main:$path")) -join "`n")
-}
+function Read-Card([string]$path) { return ((Get-GitOut @('show', "origin/main:$path")) -join "`n") }
 
 function Resolve-CardPath([string]$cardId) {
     if (-not $cardId) { throw 'card id required, e.g. S7' }
@@ -97,28 +88,23 @@ function Resolve-CardPath([string]$cardId) {
     return $hit[0]
 }
 
+# [ \t] not \s: in .NET regex \s matches newlines, so ':\s*' swallows the line break when a field's
+# value is empty and captures the NEXT line - and Set-Field would overwrite it.
 function Get-Field([string]$content, [string]$name) {
-    $m = [regex]::Match($content, "(?m)^$name\s*:\s*(.*)$")
+    $m = [regex]::Match($content, "(?m)^$name[ \t]*:[ \t]*(.*)$")
     if (-not $m.Success) { return '' }
     return $m.Groups[1].Value.Trim().Trim('"')
 }
 
 function Set-Field([string]$content, [string]$name, [string]$value) {
     $safe = $value -replace '\$', '$$$$'
-    return [regex]::Replace($content, "(?m)^$name\s*:\s*.*$", "${name}: $safe")
+    return [regex]::Replace($content, "(?m)^$name[ \t]*:[ \t]*.*$", "${name}: $safe")
 }
 
-function Add-Log([string]$content, [string]$line) {
-    return ($content.TrimEnd() + "`n- $line`n")
-}
+function Add-Log([string]$content, [string]$line) { return ($content.TrimEnd() + "`n- $line`n") }
+function Get-Title([string]$content) { return ((($content -split "`n")[0]) -replace '^#\s*', '') }
 
-function Get-Title([string]$content) {
-    return ((($content -split "`n")[0]) -replace '^#\s*', '')
-}
-
-# --- writing the board ------------------------------------------------------------------------------
-# Compare-and-set against origin/main. The mutation is re-applied to freshly fetched state on every
-# attempt, so a racing session cannot be silently overwritten - it either wins or gets a clean refusal.
+# --- writing ----------------------------------------------------------------------------------------
 # Builds a one-file commit on top of origin/main using a temp index - no checkout, no working tree.
 # Returns $true if it landed, $false if another session pushed first.
 function New-BoardCommit([string]$Path, [string]$Content, [string]$Message) {
@@ -153,16 +139,10 @@ function New-BoardCommit([string]$Path, [string]$Content, [string]$Message) {
 }
 
 function Invoke-BoardWrite {
-    param(
-        [string]$Path,           # repo-relative; resolved per attempt when -CardId is given
-        [string]$CardId,
-        [scriptblock]$Mutate,    # takes current content, returns new content, or throws to refuse
-        [string]$Message,
-        [switch]$IsNewFile
-    )
+    param([string]$Path, [string]$CardId, [scriptblock]$Mutate, [string]$Message, [switch]$IsNewFile)
 
     for ($attempt = 1; $attempt -le $MaxTries; $attempt++) {
-        Sync-Remote | Out-Null
+        Sync-Remote
 
         if ($CardId) { $Path = Resolve-CardPath $CardId }
         $current = ''
@@ -178,11 +158,10 @@ function Invoke-BoardWrite {
         Write-Warning ("another session pushed first (attempt {0} of {1}); retrying in {2} ms" -f $attempt, $MaxTries, [int]$wait)
         Start-Sleep -Milliseconds ([int]$wait)
     }
-
     throw "could not land the board change after $MaxTries attempts. The board is unusually busy; retry in a moment."
 }
 
-# --- status -----------------------------------------------------------------------------------------
+# --- derived state ----------------------------------------------------------------------------------
 function Get-Rows {
     $rows = @()
     foreach ($p in Get-CardPaths) {
@@ -194,10 +173,30 @@ function Get-Rows {
             Owner  = Get-Field $c 'owner'
             Fake   = Get-Field $c 'fake'
             Gate   = Get-Field $c 'gate'
-            Stage  = Get-Field $c 'stage'
+            GateOk = ((Get-Field $c 'gate_cleared') -eq 'yes')
+            Deps   = @((Get-Field $c 'depends_on') -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+            Stage  = [int](Get-Field $c 'stage')
             File   = [System.IO.Path]::GetFileName($p)
+            State  = ''
+            Reason = ''
+            Weight = 0
         }
     }
+
+    $byId = @{}
+    foreach ($r in $rows) { $byId[$r.Id] = $r }
+
+    foreach ($r in $rows) {
+        if ($r.Status -ne 'todo') { $r.State = $r.Status; continue }
+        if (-not $r.GateOk) { $r.State = 'gated'; $r.Reason = $r.Gate; continue }
+        $pending = @($r.Deps | Where-Object { -not $byId.ContainsKey($_) -or $byId[$_].Status -ne 'done' })
+        if ($pending.Count -gt 0) { $r.State = 'waiting'; $r.Reason = ($pending -join ',') ; continue }
+        $r.State = 'available'
+    }
+
+    # Weight = how many cards this one unblocks; used to prefer the work that frees the most sessions.
+    foreach ($r in $rows) { foreach ($d in $r.Deps) { if ($byId.ContainsKey($d)) { $byId[$d].Weight++ } } }
+
     # W0 first, then S1..S20 numerically - not lexically, or S10 sorts before S2
     return ($rows | Sort-Object @{ Expression = {
         if ($_.Id -eq 'W0') { -1 } else { [int]($_.Id -replace '\D', '') }
@@ -206,10 +205,10 @@ function Get-Rows {
 
 function Show-Rows($rows) {
     $rows | Format-Table -AutoSize @{L = 'ID'; E = { $_.Id } },
-                                  @{L = 'STATUS'; E = { $_.Status } },
+                                  @{L = 'STATE'; E = { $_.State } },
+                                  @{L = 'WHY'; E = { $_.Reason } },
                                   @{L = 'OWNER'; E = { if ($_.Owner) { $_.Owner } else { '-' } } },
                                   @{L = 'FAKE'; E = { $_.Fake } },
-                                  @{L = 'GATE'; E = { $_.Gate } },
                                   @{L = 'PACKAGE'; E = { $_.Title } }
 }
 
@@ -222,48 +221,108 @@ function Update-Status($rows) {
     [void]$sb.AppendLine()
     [void]$sb.AppendLine("_Generated $Stamp from origin/main by ``board.ps1 status``. Do not edit; git-ignored._")
     [void]$sb.AppendLine()
-    foreach ($s in @('claimed', 'in-review', 'available', 'blocked', 'done')) {
-        [void]$sb.AppendLine("- **$s**: " + @($rows | Where-Object { $_.Status -eq $s }).Count)
+    foreach ($s in @('claimed', 'in-review', 'available', 'waiting', 'gated', 'done')) {
+        [void]$sb.AppendLine("- **$s**: " + @($rows | Where-Object { $_.State -eq $s }).Count)
     }
     [void]$sb.AppendLine()
-    [void]$sb.AppendLine('| ID | Package | Status | Owner | Fake | Gate | Stage |')
+    [void]$sb.AppendLine('| ID | Package | State | Why | Owner | Fake | Stage |')
     [void]$sb.AppendLine('|---|---|---|---|---|---|---|')
     foreach ($r in $rows) {
         $owner = $r.Owner; if (-not $owner) { $owner = '-' }
-        [void]$sb.AppendLine("| [$($r.Id)](packages/$($r.File)) | $($r.Title) | ``$($r.Status)`` | $owner | $($r.Fake) | $($r.Gate) | $($r.Stage) |")
+        [void]$sb.AppendLine("| [$($r.Id)](packages/$($r.File)) | $($r.Title) | ``$($r.State)`` | $($r.Reason) | $owner | $($r.Fake) | $($r.Stage) |")
     }
     Write-Text $out $sb.ToString()
+}
+
+function Set-CardStatus([string]$cardId, [string]$to, [string]$who, [string]$note, [string]$from) {
+    Invoke-BoardWrite -CardId $cardId -Message "board: $cardId -> $to" -Mutate {
+        param($c)
+        if ($from -and (Get-Field $c 'status') -ne $from) {
+            throw "$cardId is '$(Get-Field $c 'status')', not '$from'."
+        }
+        $c = Set-Field $c 'status' $to
+        return (Add-Log $c "$Stamp | $who | $note")
+    }
+}
+
+function Try-Claim([string]$cardId, [string]$who) {
+    try {
+        Invoke-BoardWrite -CardId $cardId -Message "board: claim $cardId ($who)" -Mutate {
+            param($c)
+            if ((Get-Field $c 'status') -ne 'todo') { throw 'taken' }
+            $c = Set-Field $c 'status' 'claimed'
+            $c = Set-Field $c 'owner' $who
+            $c = Set-Field $c 'claimed_at' $Stamp
+            return (Add-Log $c "$Stamp | $who | claimed")
+        }
+        return $true
+    } catch { return $false }
+}
+
+function Show-Claimed([string]$cardId, [string]$who) {
+    $card = Read-Card (Resolve-CardPath $cardId)
+    Write-Host ""
+    Write-Host "CLAIMED $cardId - $(Get-Title $card)" -ForegroundColor Green
+    Write-Host "session: $who" -ForegroundColor DarkGray
+    Write-Host ""
+    Write-Host "  git worktree add ../otondev-$cardId -b $(Get-Field $card 'branch')" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "then read board/packages/$([System.IO.Path]::GetFileName((Resolve-CardPath $cardId))) and only the docs it links." -ForegroundColor DarkGray
 }
 
 # --- commands ---------------------------------------------------------------------------------------
 switch ($Command) {
 
     { $_ -in 'status', 'list' } {
-        Sync-Remote | Out-Null
+        Sync-Remote
         $rows = Get-Rows
         Show-Rows $rows
         if ($Command -eq 'status') { Update-Status $rows }
     }
 
-    'claim' {
-        if (-not $Session) { throw 'claim requires -Session, e.g. -Session "kai-1"' }
-        $branch = ''
-        Invoke-BoardWrite -CardId $Id -Message "board: claim $Id ($Session)" -Mutate {
-            param($c)
-            $st = Get-Field $c 'status'
-            if ($st -ne 'available') {
-                $o = Get-Field $c 'owner'
-                if (-not $o) { $o = 'none' }
-                throw "$Id is '$st' (owner: $o). Pick another card."
-            }
-            $script:branch = Get-Field $c 'branch'
-            $c = Set-Field $c 'status' 'claimed'
-            $c = Set-Field $c 'owner' $Session
-            $c = Set-Field $c 'claimed_at' $Stamp
-            return (Add-Log $c "$Stamp | $Session | claimed")
+    'next' {
+        if (-not $Session) { $Session = 'auto-' + [guid]::NewGuid().ToString('N').Substring(0, 6) }
+        Sync-Remote
+        $rows = Get-Rows
+
+        $mine = @($rows | Where-Object { $_.State -eq 'claimed' -and $_.Owner -eq $Session })
+        if ($mine.Count -gt 0) {
+            Write-Host "you already hold $($mine[0].Id). Finish or release it before taking another." -ForegroundColor Yellow
+            exit 4
         }
-        Write-Host "claimed $Id" -ForegroundColor Green
-        Write-Host "next:  git worktree add ../otondev-$Id -b $script:branch" -ForegroundColor Cyan
+
+        # Prefer the earliest stage, then whatever unblocks the most other cards. Random tiebreak so
+        # simultaneous sessions spread across candidates instead of all colliding on the same one.
+        $cands = @($rows | Where-Object { $_.State -eq 'available' } |
+                   Sort-Object @{E = { $_.Stage } }, @{E = { -$_.Weight } }, @{E = { Get-Random } })
+
+        if ($cands.Count -eq 0) {
+            Write-Host 'nothing available right now.' -ForegroundColor Yellow
+            $w = @($rows | Where-Object { $_.State -eq 'waiting' })
+            $g = @($rows | Where-Object { $_.State -eq 'gated' })
+            $c = @($rows | Where-Object { $_.State -eq 'claimed' })
+            if ($c.Count) { Write-Host "  in flight: $(($c | ForEach-Object { "$($_.Id)($($_.Owner))" }) -join ', ')" }
+            if ($w.Count) { Write-Host "  waiting on dependencies: $(($w | ForEach-Object { "$($_.Id)<-$($_.Reason)" }) -join ', ')" }
+            if ($g.Count) { Write-Host "  gated (needs a human decision): $(($g | ForEach-Object { "$($_.Id)<-$($_.Reason)" }) -join ', ')" }
+            exit 3
+        }
+
+        foreach ($cand in $cands) {
+            if (Try-Claim $cand.Id $Session) { Show-Claimed $cand.Id $Session; exit 0 }
+            Write-Host "$($cand.Id) was taken; trying the next candidate" -ForegroundColor DarkGray
+        }
+        Write-Host 'every available card was taken while picking. Run next again.' -ForegroundColor Yellow
+        exit 3
+    }
+
+    'claim' {
+        if (-not $Session) { $Session = 'auto-' + [guid]::NewGuid().ToString('N').Substring(0, 6) }
+        $row = @(Get-Rows | Where-Object { $_.Id -eq $Id })
+        if ($row.Count -eq 1 -and $row[0].State -ne 'available' -and -not $Force) {
+            throw "$Id is '$($row[0].State)'$(if ($row[0].Reason) { " ($($row[0].Reason))" }). Use 'next' to take claimable work."
+        }
+        if (-not (Try-Claim $Id $Session)) { throw "$Id was claimed by another session first." }
+        Show-Claimed $Id $Session
     }
 
     'release' {
@@ -271,7 +330,7 @@ switch ($Command) {
         Invoke-BoardWrite -CardId $Id -Message "board: release $Id" -Mutate {
             param($c)
             $o = Get-Field $c 'owner'
-            $c = Set-Field $c 'status' 'available'
+            $c = Set-Field $c 'status' 'todo'
             $c = Set-Field $c 'owner' ''
             $c = Set-Field $c 'claimed_at' ''
             return (Add-Log $c "$Stamp | $o | released - $why")
@@ -290,13 +349,15 @@ switch ($Command) {
             }
             if ($hit -lt 0) { throw "no unchecked criterion on $Id matching '$Note'" }
             $lines[$hit] = $lines[$hit] -replace '\[ \]', '[x]'
-            Write-Host ("ticked:" + ($lines[$hit] -replace '^\s*-\s\[x\]\s*', ' ')) -ForegroundColor Green
             return ($lines -join "`n")
         }
+        Write-Host "ticked on $Id" -ForegroundColor Green
     }
 
     'finish' {
-        Invoke-BoardWrite -CardId $Id -Message "board: finish $Id" -Mutate {
+        $review = $Id -match $NeedsReview
+        $to = if ($review) { 'in-review' } else { 'done' }
+        Invoke-BoardWrite -CardId $Id -Message "board: $Id -> $to" -Mutate {
             param($c)
             $open = @([regex]::Matches($c, '(?m)^\s*-\s\[ \]')).Count
             if ($open -gt 0 -and -not $Force) {
@@ -304,13 +365,32 @@ switch ($Command) {
             }
             $who = Get-Field $c 'owner'
             $why = if ($Note) { $Note } else { 'exit criteria met' }
-            $c = Set-Field $c 'status' 'in-review'
-            return (Add-Log $c "$Stamp | $who | finished - $why")
+            $c = Set-Field $c 'status' $to
+            return (Add-Log $c "$Stamp | $who | $to - $why")
         }
-        Write-Host "$Id -> in-review" -ForegroundColor Green
-        if ($Id -match '^(S4|S5|S10)$') {
-            Write-Warning "$Id is security-critical: independent review required before 'done' (impl plan section 7)."
+        Write-Host "$Id -> $to" -ForegroundColor Green
+        if ($review) {
+            Write-Warning "$Id is security-critical and does NOT self-approve. A separate session or a human must run: board.ps1 approve $Id"
+        } else {
+            $freed = @(Get-Rows | Where-Object { $_.State -eq 'available' })
+            Write-Host "cards now available: $($freed.Count)" -ForegroundColor Cyan
         }
+    }
+
+    'approve' {
+        $who = if ($Session) { $Session } else { 'reviewer' }
+        Set-CardStatus $Id 'done' $who ("approved - " + $(if ($Note) { $Note } else { 'independent review passed' })) 'in-review'
+        Write-Host "$Id -> done" -ForegroundColor Green
+    }
+
+    'clear-gate' {
+        $why = if ($Note) { $Note } else { 'gate cleared' }
+        Invoke-BoardWrite -CardId $Id -Message "board: clear gate on $Id" -Mutate {
+            param($c)
+            $c = Set-Field $c 'gate_cleared' 'yes'
+            return (Add-Log $c "$Stamp | - | gate '$(Get-Field $c 'gate')' cleared - $why")
+        }
+        Write-Host "$Id gate cleared" -ForegroundColor Green
     }
 
     'fake' {
@@ -320,26 +400,6 @@ switch ($Command) {
             return (Add-Log $c "$Stamp | $(Get-Field $c 'owner') | fake published - downstream may depend on it")
         }
         Write-Host "$Id fake published" -ForegroundColor Green
-    }
-
-    'block' {
-        $why = if ($Note) { $Note } else { 'gate unmet' }
-        Invoke-BoardWrite -CardId $Id -Message "board: block $Id" -Mutate {
-            param($c)
-            $c = Set-Field $c 'status' 'blocked'
-            return (Add-Log $c "$Stamp | - | blocked - $why")
-        }
-        Write-Host "$Id blocked" -ForegroundColor Yellow
-    }
-
-    'unblock' {
-        $why = if ($Note) { $Note } else { 'gate cleared' }
-        Invoke-BoardWrite -CardId $Id -Message "board: unblock $Id" -Mutate {
-            param($c)
-            $c = Set-Field $c 'status' 'available'
-            return (Add-Log $c "$Stamp | - | gate cleared - $why")
-        }
-        Write-Host "$Id available" -ForegroundColor Green
     }
 
     'request' {
@@ -374,5 +434,4 @@ $Note
     }
 }
 
-# Do not leak a native git exit code as the script's own result.
 exit 0

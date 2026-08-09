@@ -76,19 +76,34 @@ When the package is merged: `git worktree remove ../otondev-S7`.
 
 ## 4. Card lifecycle
 
+A card **stores** only four states. Everything else is **derived**, so nobody has to remember to
+unblock anything:
+
 ```text
-blocked ──(gate clears)──> available ──claim──> claimed ──finish──> in-review ──> done
-                               ^                    │
-                               └──────release───────┘
+todo ──claim──> claimed ──finish──> done                    (ordinary cards)
+  ^               │       ──finish──> in-review ──approve──> done   (S4, S5, S10)
+  └───release─────┘
 ```
 
-| Status | Meaning |
+| Stored `status` | Meaning |
 |---|---|
-| `blocked` | a gate outside this package's control is unmet; do not claim |
-| `available` | claimable now, all prerequisites met |
+| `todo` | not started |
 | `claimed` | a session owns it; nobody else touches it or its paths |
-| `in-review` | exit criteria all checked; awaiting review |
+| `in-review` | exit criteria met, awaiting independent review |
 | `done` | merged to `main` |
+
+| Derived state | How it is computed |
+|---|---|
+| `available` | `todo`, gate cleared, and every `depends_on` card is `done` |
+| `waiting` | `todo`, but a `depends_on` card is not `done` yet |
+| `gated` | `todo`, but an external gate is uncleared — needs a human decision |
+
+Because availability is derived from `origin/main`, **finishing a card automatically makes its
+dependents claimable**. Finishing W0 turns 14 cards from `waiting` to `available` with no human step.
+The corollary: a card only unblocks its dependents once its work is actually merged to `main`.
+
+External gates (`isolation-spike`, `ditto-spike`, `windows-spike`, `meeting-platform-decision`) can
+only be cleared by a human: `board.ps1 clear-gate S10 -Note "spike passed"`.
 
 Security-critical cards (**S4, S5, S10**) cannot go `in-review → done` on the owning session's own
 judgment. They require the independent review named in implementation plan §7.
@@ -144,21 +159,29 @@ that has not moved in a day, release it.
 
 ## 8. Starting a session
 
-1. `.\board\scripts\board.ps1 status` — fetches `origin/main` itself; no pull needed, and it works
-   from wherever you are
-2. pick an `available` card, respecting the WIP limit below
-3. `claim` it, then create your worktree and work inside it
-4. read the card's `Spec` link plus the documents it names — **not the whole design package**
+Sessions do **not** pick their own work. One command does select-and-claim atomically:
+
+```powershell
+.\board\scripts\board.ps1 next
+```
+
+It prefers the earliest stage, then the card that unblocks the most others, with a random tiebreak so
+simultaneous sessions spread across candidates instead of all colliding on the same one. Exit codes:
+`0` claimed, `3` nothing available (it prints why), `4` you already hold a card.
+
+The autonomous session loop is in [`CLAUDE.md`](../CLAUDE.md), which every session loads on startup.
 
 | Command | Effect |
 |---|---|
+| `next [-Session <name>]` | **pick + claim** the best available card, atomically |
 | `status` / `list` | fetch and show the board (`status` also regenerates `STATUS.md`) |
-| `claim <ID> -Session <name>` | compare-and-set claim; refuses if not `available` |
 | `check <ID> -Note "<text>"` | tick the first unchecked exit criterion matching `<text>` |
 | `fake <ID>` | mark your fake published so downstream sessions can depend on it |
-| `finish <ID>` | → `in-review`; refuses while exit criteria remain unticked |
-| `release <ID> -Note "<why>"` | → `available`, keeping the log history |
-| `block` / `unblock <ID>` | gate management, e.g. after W0 lands |
+| `finish <ID>` | → `done`, or `in-review` for S4/S5/S10; refuses while criteria are unticked |
+| `approve <ID>` | `in-review` → `done`, for the security-critical cards only |
+| `release <ID> -Note "<why>"` | → `todo`, keeping the log history |
+| `clear-gate <ID> -Note "<why>"` | human clears an external gate (spike result, platform choice) |
+| `claim <ID>` | manual override; prefer `next` |
 | `request <ID> -Note "<need>"` | raise a contract change request |
 
 ## WIP limit

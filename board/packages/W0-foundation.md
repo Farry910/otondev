@@ -2,12 +2,14 @@
 
 ```yaml
 id: W0
-status: available
+status: todo
 owner: ""
 claimed_at: ""
 branch: wf/W0-foundation
 stage: 0
+depends_on: 
 gate: none
+gate_cleared: yes
 fake: n/a
 ```
 

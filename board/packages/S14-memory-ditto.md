@@ -2,12 +2,14 @@
 
 ```yaml
 id: S14
-status: blocked
+status: todo
 owner: ""
 claimed_at: ""
 branch: svc/S14-memory-ditto
 stage: 2
-gate: S13 + Ditto spike
+depends_on: S13
+gate: ditto-spike
+gate_cleared: no
 fake: no
 ```
 
