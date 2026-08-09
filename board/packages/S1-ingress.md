@@ -29,7 +29,7 @@ heartbeat: 2026-08-09 15:06
 - [x] bad signature, oversized payload, and unknown schema major all fail closed
 - [x] crash between persist and ack neither loses nor duplicates an acknowledged event
 - [x] fake and implementation both pass the shared conformance suite
-- [ ] `pnpm test` green offline with all peers faked
+- [x] `pnpm test` green offline with all peers faked
 
 ## Log
 
