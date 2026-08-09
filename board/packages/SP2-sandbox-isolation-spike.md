@@ -5,7 +5,7 @@ id: SP2
 status: claimed
 owner: agent-bbf05b75
 claimed_at: 2026-08-09 13:25
-heartbeat: 2026-08-09 13:25
+heartbeat: 2026-08-09 13:47
 reviewer: ""
 branch: spike/SP2-sandbox-isolation
 stage: 0
