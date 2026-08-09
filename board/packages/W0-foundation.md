@@ -2,9 +2,9 @@
 
 ```yaml
 id: W0
-status: todo
-owner: ""
-claimed_at: ""
+status: claimed
+owner: auto-3aed8a
+claimed_at: 2026-08-09 11:54
 branch: wf/W0-foundation
 stage: 0
 depends_on: 
@@ -36,3 +36,4 @@ fake: n/a
 ## Log
 
 <!-- newest last · `YYYY-MM-DD HH:MM | session | note` -->
+- 2026-08-09 11:54 | auto-3aed8a | claimed
