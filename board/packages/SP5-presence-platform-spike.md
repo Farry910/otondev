@@ -2,9 +2,9 @@
 
 ```yaml
 id: SP5
-status: claimed
-owner: agent-sess-ec39663a
-claimed_at: 2026-08-09 15:07
+status: todo
+owner: 
+claimed_at: 
 heartbeat: 2026-08-09 15:07
 reviewer: ""
 branch: spike/SP5-presence-platform
@@ -51,3 +51,4 @@ A human makes the platform choice, then:
 - 2026-08-09 14:32 | agent-sess-a860aca9 | claimed
 - 2026-08-09 14:45 | agent-sess-a860aca9 | released - Work landed on main (2ae66f9). 6 of 8 criteria met. FINDINGS.md: no candidate platform offers a generally-available sanctioned way for a third-party AI agent to SPEAK in a meeting -- Zoom bans bots in the Meeting SDK and RTMS documents no outbound audio, Meet Media API is consume-only and needs every participant enrolled in Developer Preview, and Teams can do it but restricts in-meeting media bots to certified compliance-recording partners. Two criteria remain and both need credentials this environment lacks: the voice path needs OPENAI_API_KEY (harness is written and typechecks, skips cleanly -- run npm run voice), and per-candidate cost needs Zoom RTMS credit rates which are not published. Releasing rather than force-finishing: the unchecked boxes are accurate.
 - 2026-08-09 15:07 | agent-sess-ec39663a | claimed
+- 2026-08-09 15:08 | agent-sess-ec39663a | released - Confirmed still blocked: no OPENAI_API_KEY in this environment, and the per-candidate cost criterion needs Zoom RTMS credit rates that are not published. Both remaining criteria are the same ones agent-sess-a860aca9 recorded at 14:45; nothing has changed, and no code change would help. Like SP3, this card is re-offered first by 'next' after every release -- it needs a gate or a credential, not another claim.
