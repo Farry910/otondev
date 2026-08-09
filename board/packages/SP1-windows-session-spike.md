@@ -35,7 +35,7 @@ owns: spikes/windows-session/**
 - [x] the companion drives a target application and reports a postcondition, not just "the call returned"
 - [ ] the companion runs **non-administrator** and the service never exposes a privileged UI
 - [x] local IPC is mutually authenticated and ACL-restricted; an unauthorized local caller is rejected
-- [ ] measured: companion start latency, reconnect latency, and behaviour with the control plane unreachable
+- [x] measured: companion start latency, reconnect latency, and behaviour with the control plane unreachable
 - [ ] `spikes/windows-session/FINDINGS.md` records a **kill-or-continue verdict**, the evidence behind it, and the architecture consequences if it is "kill"
 - [ ] the finding names which S16/S17 exit criteria are now known to be reachable and which are still unproven
 
