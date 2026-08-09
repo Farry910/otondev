@@ -31,7 +31,7 @@ owns: spikes/sandbox-isolation/**
 - [x] a workspace runs the target repository's real test suite to completion inside the sandbox
 - [x] the escape suite fails to reach **every** one of: host socket, vault, cloud metadata endpoint, LAN, another workspace
 - [x] deny-by-default egress with an explicit allow-list, and egress is logged
-- [ ] CPU, memory, disk, and wall-clock quotas **terminate** rather than degrade
+- [x] CPU, memory, disk, and wall-clock quotas **terminate** rather than degrade
 - [ ] teardown completes after a deliberate worker crash, leaving nothing mounted or running
 - [ ] measured: cold workspace create, warm create, and teardown times
 - [ ] `spikes/sandbox-isolation/FINDINGS.md` records a **kill-or-continue verdict**, the host profile it holds for, and the residual risks
