@@ -2,15 +2,16 @@
 
 ```yaml
 id: S6
-status: todo
-owner: ""
-claimed_at: ""
+status: claimed
+owner: agent-sess-a860aca9
+claimed_at: 2026-08-09 14:48
 branch: svc/S6-cognition
 stage: 1
 depends_on: W0
 gate: none
 gate_cleared: yes
 fake: no
+heartbeat: 2026-08-09 14:48
 ```
 
 **Owns** — `services/cognition/**`, Postgres schema `cognition`
@@ -38,3 +39,4 @@ fake: no
 ## Log
 
 <!-- newest last · `YYYY-MM-DD HH:MM | session | note` -->
+- 2026-08-09 14:48 | agent-sess-a860aca9 | claimed
