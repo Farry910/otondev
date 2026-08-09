@@ -5,7 +5,7 @@ id: SP2
 status: claimed
 owner: agent-bbf05b75
 claimed_at: 2026-08-09 13:25
-heartbeat: 2026-08-09 13:53
+heartbeat: 2026-08-09 13:54
 reviewer: ""
 branch: spike/SP2-sandbox-isolation
 stage: 0
@@ -32,7 +32,7 @@ owns: spikes/sandbox-isolation/**
 - [x] the escape suite fails to reach **every** one of: host socket, vault, cloud metadata endpoint, LAN, another workspace
 - [x] deny-by-default egress with an explicit allow-list, and egress is logged
 - [x] CPU, memory, disk, and wall-clock quotas **terminate** rather than degrade
-- [ ] teardown completes after a deliberate worker crash, leaving nothing mounted or running
+- [x] teardown completes after a deliberate worker crash, leaving nothing mounted or running
 - [ ] measured: cold workspace create, warm create, and teardown times
 - [ ] `spikes/sandbox-isolation/FINDINGS.md` records a **kill-or-continue verdict**, the host profile it holds for, and the residual risks
 - [ ] the finding states which S10 exit criteria are now known reachable and which remain unproven
