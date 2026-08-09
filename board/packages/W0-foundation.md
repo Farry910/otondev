@@ -10,7 +10,7 @@ stage: 0
 depends_on: 
 gate: none
 gate_cleared: yes
-fake: n/a
+fake: yes
 ```
 
 **Owns** — repo scaffold, root config, CI, `packages/contracts`, `packages/testkit`, `packages/sdk`
@@ -43,3 +43,4 @@ fake: n/a
 - 2026-08-09 11:57 | auto-w0-impl | claimed
 - 2026-08-09 12:00 | auto-w0-impl | released - incorrect release+reclaim by impl-w0: liveness check was wrong, auto-3aed8a is alive and building; returning the card
 - 2026-08-09 12:00 | auto-3aed8a | claimed
+- 2026-08-09 13:01 | auto-3aed8a | fake published - downstream may depend on it
