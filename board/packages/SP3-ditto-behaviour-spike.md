@@ -2,10 +2,10 @@
 
 ```yaml
 id: SP3
-status: todo
-owner: 
-claimed_at: 
-heartbeat: 2026-08-09 14:46
+status: claimed
+owner: agent-sess-ec39663a
+claimed_at: 2026-08-09 14:56
+heartbeat: 2026-08-09 14:56
 reviewer: ""
 branch: spike/SP3-ditto-behaviour
 stage: 0
@@ -56,3 +56,4 @@ owns: spikes/ditto-behaviour/**
 - 2026-08-09 14:46 | agent-sess-a860aca9 | released - Blocked on a Ditto offline licence token (see request). No unticked criterion is reachable without it; releasing so the card is not held idle.
 - 2026-08-09 14:46 | agent-sess-a860aca9 | claimed
 - 2026-08-09 14:47 | agent-sess-a860aca9 | released - Blocked on a Ditto offline licence token; released immediately rather than held idle. See board/requests/2026-08-09-SP3-*.md
+- 2026-08-09 14:56 | agent-sess-ec39663a | claimed
