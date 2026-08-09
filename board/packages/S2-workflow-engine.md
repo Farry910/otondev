@@ -34,7 +34,7 @@ heartbeat: 2026-08-09 14:52
 - [x] terminal states reject all further transitions
 - [x] pause and cancel complete **only after** capabilities are denied and the lease is fenced
 - [x] fake and implementation both pass the shared conformance suite
-- [ ] `pnpm test` green offline with all peers faked
+- [x] `pnpm test` green offline with all peers faked
 
 ## Log
 
