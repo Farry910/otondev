@@ -31,7 +31,7 @@ heartbeat: 2026-08-09 14:53
 - [x] "skipped" is never reported as pass; "best effort" is not equivalent to pass
 - [x] a manifest version mismatch fails closed
 - [ ] the verifier cannot publish, approve, or review its own executor's narrative
-- [ ] fake and implementation both pass the shared conformance suite
+- [x] fake and implementation both pass the shared conformance suite
 - [ ] `pnpm test` green offline with all peers faked
 
 ## Log
