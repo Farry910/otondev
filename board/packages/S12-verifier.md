@@ -28,7 +28,7 @@ heartbeat: 2026-08-09 14:53
 - [x] explicit recording of skipped and unavailable checks
 - [x] verdict plus known limitations; diff, secret, and licence scanning hooks
 - [ ] executor says pass while verifier fails resolves as **fail**
-- [ ] "skipped" is never reported as pass; "best effort" is not equivalent to pass
+- [x] "skipped" is never reported as pass; "best effort" is not equivalent to pass
 - [ ] a manifest version mismatch fails closed
 - [ ] the verifier cannot publish, approve, or review its own executor's narrative
 - [ ] fake and implementation both pass the shared conformance suite
