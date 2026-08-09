@@ -34,7 +34,7 @@ owns: spikes/presence-platform/**
 - [x] the data path is documented: what audio or transcript leaves the boundary, to which provider, in which region
 - [ ] cost per meeting-hour estimated for each candidate, with the assumptions stated
 - [x] the failure modes that would violate the presence SLOs are named per platform
-- [ ] `spikes/presence-platform/FINDINGS.md` presents a **comparison and a recommendation**, explicitly marked as input to a human decision, not as the decision
+- [x] `spikes/presence-platform/FINDINGS.md` presents a **comparison and a recommendation**, explicitly marked as input to a human decision, not as the decision
 - [ ] the finding states which S15 exit criteria each candidate can satisfy and which it cannot
 
 ## Handing the result back
