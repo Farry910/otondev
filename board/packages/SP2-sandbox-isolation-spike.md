@@ -33,7 +33,7 @@ owns: spikes/sandbox-isolation/**
 - [x] deny-by-default egress with an explicit allow-list, and egress is logged
 - [x] CPU, memory, disk, and wall-clock quotas **terminate** rather than degrade
 - [x] teardown completes after a deliberate worker crash, leaving nothing mounted or running
-- [ ] measured: cold workspace create, warm create, and teardown times
+- [x] measured: cold workspace create, warm create, and teardown times
 - [ ] `spikes/sandbox-isolation/FINDINGS.md` records a **kill-or-continue verdict**, the host profile it holds for, and the residual risks
 - [ ] the finding states which S10 exit criteria are now known reachable and which remain unproven
 
