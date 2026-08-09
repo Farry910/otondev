@@ -2,7 +2,7 @@
 
 ```yaml
 id: S2
-status: claimed
+status: done
 owner: agent-sess-83866095
 claimed_at: 2026-08-09 14:30
 branch: svc/S2-workflow
@@ -40,3 +40,4 @@ heartbeat: 2026-08-09 14:52
 
 <!-- newest last · `YYYY-MM-DD HH:MM | session | note` -->
 - 2026-08-09 14:30 | agent-sess-83866095 | claimed
+- 2026-08-09 14:52 | agent-sess-83866095 | done - exit criteria met
