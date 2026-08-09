@@ -24,7 +24,7 @@ heartbeat: 2026-08-09 15:06
 - [x] per-source webhook signature verification, replay window, schema and size limits
 - [x] normalization to `agentdev.event.v2` with untrusted fields explicitly labelled
 - [x] dedupe on `(tenant, source, source_event_id)`; a duplicate returns the **existing** canonical event ID
-- [ ] acknowledge only after authentication, dedupe persistence, **and** durable enqueue all succeed
+- [x] acknowledge only after authentication, dedupe persistence, **and** durable enqueue all succeed
 - [ ] out-of-order source version is retained and does not roll state backward
 - [ ] bad signature, oversized payload, and unknown schema major all fail closed
 - [ ] crash between persist and ack neither loses nor duplicates an acknowledged event
