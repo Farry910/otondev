@@ -2,7 +2,7 @@
 
 ```yaml
 id: S12
-status: claimed
+status: done
 owner: agent-sess-ec39663a
 claimed_at: 2026-08-09 14:37
 branch: svc/S12-verifier
@@ -38,3 +38,4 @@ heartbeat: 2026-08-09 14:53
 
 <!-- newest last · `YYYY-MM-DD HH:MM | session | note` -->
 - 2026-08-09 14:37 | agent-sess-ec39663a | claimed
+- 2026-08-09 14:56 | agent-sess-ec39663a | done - Landed 39c3d23. All 11 criteria met; 61 tests in services/verifier, 267 across the workspace, green offline with peers faked. Verified with: npx tsc -b services/verifier --force (root typecheck does NOT cover services/* -- raised), eslint, check-boundaries, check-path-ownership, vitest run. Did not deepen FakeVerifier: it already passes the shared suite in zero-divergence parity with the real implementation, and the properties my package adds (skipped-never-pass under scripted checks, target-drift detection) cannot be expressed in a shared suite because VerifierClient exposes no way to drive check statuses. Three contract requests raised: root tsconfig not covering services/*, the SDK README's 'add real: to subjects.ts' instruction being forbidden by the sdk-is-implementation-free boundary rule, and no lockfile-freshness gate (which had broken main).
