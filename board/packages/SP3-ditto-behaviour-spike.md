@@ -5,7 +5,7 @@ id: SP3
 status: claimed
 owner: agent-bbf05b75
 claimed_at: 2026-08-09 14:00
-heartbeat: 2026-08-09 14:02
+heartbeat: 2026-08-09 14:11
 reviewer: ""
 branch: spike/SP3-ditto-behaviour
 stage: 0
@@ -28,7 +28,7 @@ owns: spikes/ditto-behaviour/**
 
 ## Exit criteria
 
-- [ ] record, provenance, and tombstone behaviour observed against a real Ditto SDK, not from docs
+- [x] record, provenance, and tombstone behaviour observed against a real Ditto SDK, not from docs
 - [ ] sync convergence between two peers, including a concurrent update to the same record
 - [ ] partial subscription: a peer subscribed to a scope does **not** receive out-of-scope records
 - [ ] deletion and correction propagate to a synced peer, and the peer's index reflects it
