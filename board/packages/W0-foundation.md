@@ -31,7 +31,7 @@ fake: n/a
 - [x] the conformance-suite runner and its **fake-parity driver** run and report
 - [x] a typed client interface for every S1–S20 service, each with a minimal in-memory fake
 - [x] W0-E: the `deny()` / `quarantine()` / `revoke()` hook interface plus structured logging and OTel bootstrap
-- [ ] a trivial consumer compiles and tests green against any interface, offline, with all peers faked
+- [x] a trivial consumer compiles and tests green against any interface, offline, with all peers faked
 
 ## Log
 
