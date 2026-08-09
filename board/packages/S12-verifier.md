@@ -11,7 +11,7 @@ depends_on: W0
 gate: none
 gate_cleared: yes
 fake: no
-heartbeat: 2026-08-09 14:37
+heartbeat: 2026-08-09 14:53
 ```
 
 **Owns** — `services/verifier/**`
@@ -22,7 +22,7 @@ heartbeat: 2026-08-09 14:37
 
 ## Exit criteria
 
-- [ ] versioned verifier manifest parser and validator
+- [x] versioned verifier manifest parser and validator
 - [ ] check execution against the immutable diff and commit
 - [ ] receives goal, diff, definition of done, and evidence — **never the executor's narrative**
 - [ ] explicit recording of skipped and unavailable checks
