@@ -2,10 +2,10 @@
 
 ```yaml
 id: SP3
-status: todo
-owner: 
-claimed_at: 
-heartbeat: 2026-08-09 14:32
+status: claimed
+owner: agent-sess-ec39663a
+claimed_at: 2026-08-09 14:35
+heartbeat: 2026-08-09 14:35
 reviewer: ""
 branch: spike/SP3-ditto-behaviour
 stage: 0
@@ -50,3 +50,4 @@ owns: spikes/ditto-behaviour/**
 - 2026-08-09 14:17 | agent-bbf05b75 | released - Work landed on main (1b37783). 3 of 8 criteria met; FINDINGS.md gives verdict CONTINUE and the gate stays closed. The remaining 5 all need an offline licence token from portal.ditto.live -- set DITTO_OFFLINE_LICENSE_TOKEN and run 'npm run sync; npm run report' in spikes/ditto-behaviour and the skipped rows become real results with no code change. Releasing rather than force-finishing: the unchecked boxes are accurate.
 - 2026-08-09 14:32 | agent-sess-ec39663a | claimed
 - 2026-08-09 14:35 | agent-sess-ec39663a | released - Still blocked on DITTO_OFFLINE_LICENSE_TOKEN; no token in this environment and obtaining one needs a human at portal.ditto.live. Criteria 2-6 need two peers and sync.start() is refused until activation (observed, evidence/events-cap-01.jsonl). Landed ae9e014: criterion 7 is ticked on this card but NOT met -- FINDINGS.md says it was deliberately left unticked and the decisive two-peer experiment was never run. board.ps1 has no un-tick, so FINDINGS.md now carries the correction. Do not clear ditto-spike on the checkboxes alone.
+- 2026-08-09 14:35 | agent-sess-ec39663a | claimed
