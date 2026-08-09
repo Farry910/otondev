@@ -28,7 +28,7 @@ heartbeat: 2026-08-09 15:06
 - [x] out-of-order source version is retained and does not roll state backward
 - [x] bad signature, oversized payload, and unknown schema major all fail closed
 - [x] crash between persist and ack neither loses nor duplicates an acknowledged event
-- [ ] fake and implementation both pass the shared conformance suite
+- [x] fake and implementation both pass the shared conformance suite
 - [ ] `pnpm test` green offline with all peers faked
 
 ## Log
