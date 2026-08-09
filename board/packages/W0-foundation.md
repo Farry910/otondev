@@ -2,9 +2,9 @@
 
 ```yaml
 id: W0
-status: claimed
-owner: auto-3aed8a
-claimed_at: 2026-08-09 11:54
+status: todo
+owner: 
+claimed_at: 
 branch: wf/W0-foundation
 stage: 0
 depends_on: 
@@ -37,3 +37,4 @@ fake: n/a
 
 <!-- newest last · `YYYY-MM-DD HH:MM | session | note` -->
 - 2026-08-09 11:54 | auto-3aed8a | claimed
+- 2026-08-09 11:55 | auto-3aed8a | released - abandoned: session auto-3aed8a claimed at 11:54 and ended with no commits and an untouched worktree
