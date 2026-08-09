@@ -25,7 +25,7 @@ heartbeat: 2026-08-09 14:51
 ## Exit criteria
 
 - [x] the full state machine from contracts §3, with compare-and-set on `state_version`
-- [ ] leases carrying owner, expiry, and **fencing token**; timers and wakeups; retry and backoff
+- [x] leases carrying owner, expiry, and **fencing token**; timers and wakeups; retry and backoff
 - [ ] a transition event persisted for every state change
 - [ ] compensation hooks and the recovery scan for interrupted attempts
 - [ ] two claimants on one workflow: exactly one wins
