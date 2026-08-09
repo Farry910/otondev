@@ -30,7 +30,7 @@ heartbeat: 2026-08-09 14:52
 - [x] compensation hooks and the recovery scan for interrupted attempts
 - [x] two claimants on one workflow: exactly one wins
 - [x] an expired worker's write is fenced and rejected
-- [ ] crash mid-transition resumes at a safe state
+- [x] crash mid-transition resumes at a safe state
 - [ ] terminal states reject all further transitions
 - [ ] pause and cancel complete **only after** capabilities are denied and the lease is fenced
 - [ ] fake and implementation both pass the shared conformance suite
