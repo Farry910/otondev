@@ -16,6 +16,10 @@
  * ESM hoists static imports above all statements, so setting `process.env` at module top level
  * would still run *after* `@dittolive/ditto` had been loaded. Hence the dynamic import.
  */
+// The whole purpose of this module is to avoid a static import of the SDK, and
+// `typeof import(...)` is the only way to name its type without reintroducing the hoisted
+// import the comment above exists to prevent.
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports
 export type DittoModule = typeof import('@dittolive/ditto')
 
 let cached: DittoModule | undefined
