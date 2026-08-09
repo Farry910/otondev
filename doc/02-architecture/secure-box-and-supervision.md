@@ -1,8 +1,8 @@
 # Secure Box and supervision — isolation and recovery
 
 **Status:** proposed v2  
-**Related:** [Security](security-and-credentials.md) · [Agent Core](agent-core.md) ·
-[Presentation](simulation-service.md) · [Operations](operations-and-evaluation.md)
+**Related:** [Security](security-and-credentials.md) · [Agent Core](components/agent-core.md) ·
+[Presentation](components/simulation-service.md) · [Operations](../05-operations/operations-and-evaluation.md)
 
 ## Reframing the Secure Box
 
@@ -109,7 +109,7 @@ state. Restore uses immutable images plus durable configuration/state where poss
 
 ## Availability targets
 
-The pilot SLOs in [operations-and-evaluation.md](operations-and-evaluation.md) replace “never die.”
+The pilot SLOs in [operations-and-evaluation.md](../05-operations/operations-and-evaluation.md) replace “never die.”
 Targets cover control availability, event durability, workflow recovery, presence recovery, stop
 propagation, and duplicate side effects. They are validated with process, worker, host, network,
 provider, token, storage, and bad-rollout fault injection.

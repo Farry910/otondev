@@ -1,0 +1,36 @@
+# S12 — Verifier and Definition of Done
+
+```yaml
+id: S12
+status: blocked
+owner: ""
+claimed_at: ""
+branch: svc/S12-verifier
+stage: 1
+gate: W0
+fake: no
+```
+
+**Owns** — `services/verifier/**`
+**Spec** — implementation plan §5 · S12 · [doc](../../doc/03-implementation/implementation-plan.md)
+**Read also** — [task-engine](../../doc/02-architecture/components/task-engine.md) definition of done
+**Fakes** — workspace, evidence
+**Separate process** — independent of the executor, and holds **no publish capability**
+
+## Exit criteria
+
+- [ ] versioned verifier manifest parser and validator
+- [ ] check execution against the immutable diff and commit
+- [ ] receives goal, diff, definition of done, and evidence — **never the executor's narrative**
+- [ ] explicit recording of skipped and unavailable checks
+- [ ] verdict plus known limitations; diff, secret, and licence scanning hooks
+- [ ] executor says pass while verifier fails resolves as **fail**
+- [ ] "skipped" is never reported as pass; "best effort" is not equivalent to pass
+- [ ] a manifest version mismatch fails closed
+- [ ] the verifier cannot publish, approve, or review its own executor's narrative
+- [ ] fake and implementation both pass the shared conformance suite
+- [ ] `pnpm test` green offline with all peers faked
+
+## Log
+
+<!-- newest last · `YYYY-MM-DD HH:MM | session | note` -->

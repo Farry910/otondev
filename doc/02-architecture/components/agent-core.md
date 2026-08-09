@@ -1,7 +1,7 @@
 # Agent Core — durable logical identity and coordinator
 
 **Status:** proposed v2  
-**Related:** [Architecture](../first_high_level_architecture.md) · [Contracts](contracts-and-data.md) ·
+**Related:** [Architecture](../architecture-v2.md) · [Contracts](../contracts-and-data.md) ·
 [Task Engine](task-engine.md) · [Cognition](cognition-router.md) · [Memory](memory-service.md)
 
 ## Responsibilities
@@ -128,7 +128,7 @@ by data class, and stripped of secret values.
   `PresenceCommand`, authenticated agent-to-agent handoff events, status messages.
 - State: workflow/lease/lock records in the operational store; identity and policy by immutable version.
 
-Normative shapes are in [contracts-and-data.md](contracts-and-data.md).
+Normative shapes are in [contracts-and-data.md](../contracts-and-data.md).
 
 ## Required tests
 

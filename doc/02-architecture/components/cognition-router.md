@@ -1,8 +1,8 @@
 # Cognition Gateway — model routing and context governance
 
 **Status:** proposed v2; replaces the security claims of the former “smart router”  
-**Related:** [Security](security-and-credentials.md) · [Memory](memory-service.md) ·
-[Contracts](contracts-and-data.md) · [Agent Core](agent-core.md)
+**Related:** [Security](../security-and-credentials.md) · [Memory](memory-service.md) ·
+[Contracts](../contracts-and-data.md) · [Agent Core](agent-core.md)
 
 ## Responsibilities
 

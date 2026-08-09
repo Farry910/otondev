@@ -1,0 +1,36 @@
+# W0 — Foundation
+
+```yaml
+id: W0
+status: available
+owner: ""
+claimed_at: ""
+branch: wf/W0-foundation
+stage: 0
+gate: none
+fake: n/a
+```
+
+**Owns** — repo scaffold, root config, CI, `packages/contracts`, `packages/testkit`, `packages/sdk`
+**Spec** — implementation plan §3 · [doc](../../doc/03-implementation/implementation-plan.md)
+**Blocks** — every other card
+
+> **Serialization point.** The WIP limit is **1** until this card is `done`. Parallelizing W0 produces
+> exactly the contract churn this board exists to prevent.
+
+## Exit criteria
+
+- [ ] pnpm workspace, `tsconfig.base`, lint, test runner, CI, `docker-compose.dev.yml`
+- [ ] import-boundary rules (`dependency-cruiser`) and the path-ownership check both fail the build when violated
+- [ ] every schema in [contracts-and-data](../../doc/02-architecture/contracts-and-data.md) exists as Zod with JSON Schema emitted
+- [ ] envelope validation and version negotiation, **failing closed on unknown major**
+- [ ] the error-code enum from contracts §11
+- [ ] testkit: fake clock, deterministic IDs, fault injection, golden-file harness
+- [ ] the conformance-suite runner and its **fake-parity driver** run and report
+- [ ] a typed client interface for every S1–S20 service, each with a minimal in-memory fake
+- [ ] W0-E: the `deny()` / `quarantine()` / `revoke()` hook interface plus structured logging and OTel bootstrap
+- [ ] a trivial consumer compiles and tests green against any interface, offline, with all peers faked
+
+## Log
+
+<!-- newest last · `YYYY-MM-DD HH:MM | session | note` -->

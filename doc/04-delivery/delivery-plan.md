@@ -1,8 +1,8 @@
 # Delivery plan — risk-first vertical slices
 
 **Status:** proposed; schedule depends on team, integrations, and security environment  
-**Related:** [Requirements](requirements.md) · [Operations](operations-and-evaluation.md) ·
-[Review](review-findings.md)
+**Related:** [Requirements](../01-product/requirements.md) · [Operations](../05-operations/operations-and-evaluation.md) ·
+[Review](../06-decisions/review-findings.md)
 
 ## Planning assumptions
 
@@ -37,7 +37,7 @@ one repo toolchain, Git/ticket connector, verifier, evidence bundle, audit, oper
 Demo: a synthetic ticket produces a draft PR exactly once with commit-bound checks and clear limitations.
 Kill the Core/worker at multiple points, replay the webhook, expire the token, and prove correct recovery.
 
-Exit gates are the [first vertical-slice acceptance](requirements.md#6-first-vertical-slice-acceptance),
+Exit gates are the [first vertical-slice acceptance](../01-product/requirements.md#6-first-vertical-slice-acceptance),
 not a polished persona.
 
 ## Stage 2 — memory and learning slice (roughly 2–4 weeks)

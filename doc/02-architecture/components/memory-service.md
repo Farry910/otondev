@@ -1,8 +1,8 @@
 # Memory Service — provenance-aware learning over Ditto
 
 **Status:** proposed v2  
-**Related:** [Security](security-and-credentials.md) · [Contracts](contracts-and-data.md) ·
-[Presence](presence-service.md) · [External constraints](external-constraints.md)
+**Related:** [Security](../security-and-credentials.md) · [Contracts](../contracts-and-data.md) ·
+[Presence](presence-service.md) · [External constraints](../../06-decisions/external-constraints.md)
 
 ## Responsibilities
 

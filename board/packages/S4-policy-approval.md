@@ -1,0 +1,37 @@
+# S4 — Policy and Approval
+
+```yaml
+id: S4
+status: blocked
+owner: ""
+claimed_at: ""
+branch: svc/S4-policy
+stage: 1
+gate: W0
+fake: no
+```
+
+**Owns** — `services/policy/**`, Postgres schema `policy`
+**Spec** — implementation plan §5 · S4 · [doc](../../doc/03-implementation/implementation-plan.md)
+**Read also** — [contracts §5](../../doc/02-architecture/contracts-and-data.md), [security](../../doc/02-architecture/security-and-credentials.md)
+**Fakes** — audit
+
+> **Security-critical.** Requires independent review before any package performs a real mutation
+> against it. Do not move this card to `done` on your own judgment.
+
+## Exit criteria
+
+- [ ] deterministic evaluation over actor, action, resource, environment, data class, provenance, incident mode, cost, approval
+- [ ] effective autonomy is the **minimum** across agent, repo, environment, data class, incident mode, and action type
+- [ ] signed, versioned policy bundles; decisions reproducible from logged inputs plus bundle hash
+- [ ] approval records bound to actor, action, normalized parameter digest, resource, environment, expiry, `max_uses`
+- [ ] editing any bound field invalidates the approval
+- [ ] a consumed or expired approval cannot be replayed
+- [ ] unknown or unclassified input **denies**
+- [ ] chat text, emoji, ticket labels, and model output never produce an approval record
+- [ ] fake and implementation both pass the shared conformance suite
+- [ ] `pnpm test` green offline with all peers faked
+
+## Log
+
+<!-- newest last · `YYYY-MM-DD HH:MM | session | note` -->

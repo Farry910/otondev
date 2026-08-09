@@ -1,8 +1,8 @@
 # Agent Dev — Architecture v2
 
 **Status:** proposed architecture, not implemented  
-**Product origin:** [`primary_messy_design.md`](primary_messy_design.md)  
-**Detailed designs:** [`design/00_overview.md`](design/00_overview.md)
+**Product origin:** [`primary_messy_design.md`](../01-product/primary_messy_design.md)  
+**Component designs:** [`02-architecture/README.md`](README.md)
 
 ## 1. Executive decision
 
@@ -126,7 +126,7 @@ a **trust zone and namespace**, not necessarily one VM or one process.
 | Audit/observability | immutable action trail, metrics, traces, alerts | secret payloads |
 | Supervisor | liveness, restart, fencing, version rollout | business decisions |
 
-Detailed component contracts are in the linked [design index](design/00_overview.md).
+Detailed component contracts are in the linked [component index](README.md).
 
 ## 5. Durable agent lifecycle
 
@@ -150,8 +150,8 @@ FAILED is terminal and a deliberate retry creates a linked workflow.
 - Checkpoints store sanitized inputs, output references, tool versions, commit SHA, and next safe
   transition. They do not blindly serialize model context or secrets.
 
-See [Agent Core](design/agent-core.md), [Task Engine](design/task-engine.md), and
-[contracts](design/contracts-and-data.md).
+See [Agent Core](components/agent-core.md), [Task Engine](components/task-engine.md), and
+[contracts](contracts-and-data.md).
 
 ## 6. Autonomy model
 
@@ -212,7 +212,7 @@ and model receive opaque resource handles, not secret values.
 
 Tickets, PRs, code comments, test output, logs, chat, web pages, screenshots, and retrieved memories
 are untrusted. The architecture isolates their parsing from privileged action selection and validates
-every tool call against original intent and policy. See [Security](design/security-and-credentials.md).
+every tool call against original intent and policy. See [Security](security-and-credentials.md).
 
 ## 9. Memory and learning
 
@@ -355,7 +355,7 @@ Do not attempt the old eight-week all-feature fleet demo. Build risk-first verti
 4. **Second agent and incident slice:** only after the first three meet their gates; incident remains
    read-only diagnosis and RCA.
 
-The detailed gates and estimates are in [delivery-plan.md](design/delivery-plan.md).
+The detailed gates and estimates are in [delivery-plan.md](../04-delivery/delivery-plan.md).
 
 ## 17. Decisions still required
 

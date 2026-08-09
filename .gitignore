@@ -1,0 +1,9 @@
+# Generated board view. Regenerate with: .\board\scripts\board.ps1 status
+# Deliberately not committed: it is derived from board/packages/*.md and would
+# otherwise conflict on every concurrent claim.
+board/STATUS.md
+
+node_modules/
+dist/
+.env
+*.log

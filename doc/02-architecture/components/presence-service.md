@@ -2,7 +2,7 @@
 
 **Status:** proposed v2  
 **Related:** [Presentation](simulation-service.md) · [Memory](memory-service.md) ·
-[Secure Box](secure-box-and-supervision.md) · [Security](security-and-credentials.md)
+[Secure Box](../secure-box-and-supervision.md) · [Security](../security-and-credentials.md)
 
 ## Responsibilities
 

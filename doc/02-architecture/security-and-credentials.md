@@ -1,8 +1,8 @@
 # Security, privacy, and credentials
 
 **Status:** proposed threat model; not a certification or achieved guarantee  
-**Related:** [Architecture](../first_high_level_architecture.md) · [Requirements](requirements.md) ·
-[Secure Box](secure-box-and-supervision.md) · [Cognition](cognition-router.md)
+**Related:** [Architecture](architecture-v2.md) · [Requirements](../01-product/requirements.md) ·
+[Secure Box](secure-box-and-supervision.md) · [Cognition](components/cognition-router.md)
 
 ## Security objectives
 

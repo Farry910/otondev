@@ -1,8 +1,8 @@
 # Operations, SLOs, and evaluation
 
 **Status:** proposed pilot operating model  
-**Related:** [Secure Box](secure-box-and-supervision.md) · [Task Engine](task-engine.md) ·
-[Security](security-and-credentials.md) · [Delivery Plan](delivery-plan.md)
+**Related:** [Secure Box](../02-architecture/secure-box-and-supervision.md) · [Task Engine](../02-architecture/components/task-engine.md) ·
+[Security](../02-architecture/security-and-credentials.md) · [Delivery Plan](../04-delivery/delivery-plan.md)
 
 ## 1. Service objectives
 

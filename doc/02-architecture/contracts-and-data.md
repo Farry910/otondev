@@ -1,7 +1,7 @@
 # Contracts and data model
 
 **Status:** proposed normative v2  
-**Related:** [Architecture](../first_high_level_architecture.md) · [Agent Core](agent-core.md) ·
+**Related:** [Architecture](architecture-v2.md) · [Agent Core](components/agent-core.md) ·
 [Security](security-and-credentials.md)
 
 This document defines semantic contracts. JSON/YAML examples are illustrative; implementation schemas
@@ -228,7 +228,7 @@ provider guarantees the same idempotency key.
 
 ## 8. Cognition request/result
 
-The request shape is defined in [cognition-router.md](cognition-router.md). A result includes provider,
+The request shape is defined in [cognition-router.md](components/cognition-router.md). A result includes provider,
 model/version, prompt-template version/hash, authorized context digest, structured content, schema
 verdict, usage/cost/latency, uncertainty, citations/evidence refs, and completion/failure reason.
 It never contains a trusted authorization decision.

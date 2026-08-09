@@ -1,8 +1,8 @@
 # Presentation Controller — safe UI walkthroughs
 
 **Status:** proposed v2; retains “Simulation Service” as a product alias  
-**Related:** [Presence](presence-service.md) · [Secure Box](secure-box-and-supervision.md) ·
-[Security](security-and-credentials.md)
+**Related:** [Presence](presence-service.md) · [Secure Box](../secure-box-and-supervision.md) ·
+[Security](../security-and-credentials.md)
 
 ## Responsibilities
 

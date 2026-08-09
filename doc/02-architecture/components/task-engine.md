@@ -1,8 +1,8 @@
 # Task Engine — governed engineering workflows
 
 **Status:** proposed v2  
-**Related:** [Agent Core](agent-core.md) · [Security](security-and-credentials.md) ·
-[Contracts](contracts-and-data.md) · [Operations](operations-and-evaluation.md)
+**Related:** [Agent Core](agent-core.md) · [Security](../security-and-credentials.md) ·
+[Contracts](../contracts-and-data.md) · [Operations](../../05-operations/operations-and-evaluation.md)
 
 ## Responsibilities
 

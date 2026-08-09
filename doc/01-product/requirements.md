@@ -1,7 +1,7 @@
 # Product requirements
 
 **Status:** proposed baseline  
-**Related:** [Architecture](../first_high_level_architecture.md) · [Review](review-findings.md)
+**Related:** [Architecture](../02-architecture/architecture-v2.md) · [Review](../06-decisions/review-findings.md)
 
 ## 1. Product statement
 
