@@ -35,7 +35,7 @@ owns: spikes/ditto-behaviour/**
 - [ ] collection separation for private vs team-approved data holds under sync
 - [ ] peer authentication behaviour and its failure mode are documented
 - [x] confirmed in the spike, not assumed: Ditto is unsuitable for work claims, approval uniqueness, fencing, and revocation
-- [ ] `spikes/ditto-behaviour/FINDINGS.md` records a **kill-or-continue verdict**, the exact SDK and version tested, and which `MemoryStore` conformance cases the adapter can satisfy
+- [x] `spikes/ditto-behaviour/FINDINGS.md` records a **kill-or-continue verdict**, the exact SDK and version tested, and which `MemoryStore` conformance cases the adapter can satisfy
 
 ## Handing the result back
 
