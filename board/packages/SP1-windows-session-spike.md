@@ -2,10 +2,10 @@
 
 ```yaml
 id: SP1
-status: todo
-owner: 
-claimed_at: 
-heartbeat: 2026-08-09 14:29
+status: claimed
+owner: agent-bbf05b75
+claimed_at: 2026-08-09 14:30
+heartbeat: 2026-08-09 14:30
 reviewer: ""
 branch: spike/SP1-windows-session
 stage: 0
@@ -57,3 +57,4 @@ A human reads `FINDINGS.md` and, if the verdict is continue, runs:
 - 2026-08-09 14:29 | agent-sess-83866095 | released - unelevated half complete and pushed (afc5136); 5/8 criteria ticked. Remaining 3 need an administrator: scripts/run-elevated.ps1 installs the LocalSystem service and closes them. FINDINGS.md says CONTINUE but do not clear windows-spike yet.
 - 2026-08-09 14:29 | agent-sess-83866095 | claimed
 - 2026-08-09 14:29 | agent-sess-83866095 | released - blocked on administrator access, not on engineering. 5/8 ticked and pushed (afc5136); the last 3 need scripts/run-elevated.ps1 from an elevated shell plus an operator to lock/logoff/reboot.
+- 2026-08-09 14:30 | agent-bbf05b75 | claimed
