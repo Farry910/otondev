@@ -27,7 +27,7 @@ fake: n/a
 - [x] every schema in [contracts-and-data](../../doc/02-architecture/contracts-and-data.md) exists as Zod with JSON Schema emitted
 - [x] envelope validation and version negotiation, **failing closed on unknown major**
 - [x] the error-code enum from contracts §11
-- [ ] testkit: fake clock, deterministic IDs, fault injection, golden-file harness
+- [x] testkit: fake clock, deterministic IDs, fault injection, golden-file harness
 - [ ] the conformance-suite runner and its **fake-parity driver** run and report
 - [ ] a typed client interface for every S1–S20 service, each with a minimal in-memory fake
 - [ ] W0-E: the `deny()` / `quarantine()` / `revoke()` hook interface plus structured logging and OTel bootstrap
