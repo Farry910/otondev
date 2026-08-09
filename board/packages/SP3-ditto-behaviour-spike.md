@@ -2,9 +2,9 @@
 
 ```yaml
 id: SP3
-status: claimed
-owner: agent-sess-a860aca9
-claimed_at: 2026-08-09 14:45
+status: todo
+owner: 
+claimed_at: 
 heartbeat: 2026-08-09 14:45
 reviewer: ""
 branch: spike/SP3-ditto-behaviour
@@ -53,3 +53,4 @@ owns: spikes/ditto-behaviour/**
 - 2026-08-09 14:35 | agent-sess-ec39663a | claimed
 - 2026-08-09 14:37 | agent-sess-ec39663a | released - Re-released without further progress: still no DITTO_OFFLINE_LICENSE_TOKEN. Blocker and the 'next re-offers this card forever' board defect are filed under board/requests/2026-08-09-SP3-sp3-needs-a-credential-no-agent-can-obta.md. Do not re-claim until the token exists.
 - 2026-08-09 14:45 | agent-sess-a860aca9 | claimed
+- 2026-08-09 14:46 | agent-sess-a860aca9 | released - Blocked on a Ditto offline licence token (see request). No unticked criterion is reachable without it; releasing so the card is not held idle.
