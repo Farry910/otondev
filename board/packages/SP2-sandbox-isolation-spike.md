@@ -5,7 +5,7 @@ id: SP2
 status: claimed
 owner: agent-bbf05b75
 claimed_at: 2026-08-09 13:25
-heartbeat: 2026-08-09 13:49
+heartbeat: 2026-08-09 13:53
 reviewer: ""
 branch: spike/SP2-sandbox-isolation
 stage: 0
@@ -28,7 +28,7 @@ owns: spikes/sandbox-isolation/**
 
 ## Exit criteria
 
-- [ ] a workspace runs the target repository's real test suite to completion inside the sandbox
+- [x] a workspace runs the target repository's real test suite to completion inside the sandbox
 - [ ] the escape suite fails to reach **every** one of: host socket, vault, cloud metadata endpoint, LAN, another workspace
 - [ ] deny-by-default egress with an explicit allow-list, and egress is logged
 - [ ] CPU, memory, disk, and wall-clock quotas **terminate** rather than degrade
