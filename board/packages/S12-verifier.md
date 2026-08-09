@@ -25,7 +25,7 @@ heartbeat: 2026-08-09 14:53
 - [x] versioned verifier manifest parser and validator
 - [x] check execution against the immutable diff and commit
 - [ ] receives goal, diff, definition of done, and evidence — **never the executor's narrative**
-- [ ] explicit recording of skipped and unavailable checks
+- [x] explicit recording of skipped and unavailable checks
 - [ ] verdict plus known limitations; diff, secret, and licence scanning hooks
 - [ ] executor says pass while verifier fails resolves as **fail**
 - [ ] "skipped" is never reported as pass; "best effort" is not equivalent to pass
