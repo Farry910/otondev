@@ -2,9 +2,9 @@
 
 ```yaml
 id: SP3
-status: claimed
-owner: agent-sess-ec39663a
-claimed_at: 2026-08-09 14:35
+status: todo
+owner: 
+claimed_at: 
 heartbeat: 2026-08-09 14:35
 reviewer: ""
 branch: spike/SP3-ditto-behaviour
@@ -51,3 +51,4 @@ owns: spikes/ditto-behaviour/**
 - 2026-08-09 14:32 | agent-sess-ec39663a | claimed
 - 2026-08-09 14:35 | agent-sess-ec39663a | released - Still blocked on DITTO_OFFLINE_LICENSE_TOKEN; no token in this environment and obtaining one needs a human at portal.ditto.live. Criteria 2-6 need two peers and sync.start() is refused until activation (observed, evidence/events-cap-01.jsonl). Landed ae9e014: criterion 7 is ticked on this card but NOT met -- FINDINGS.md says it was deliberately left unticked and the decisive two-peer experiment was never run. board.ps1 has no un-tick, so FINDINGS.md now carries the correction. Do not clear ditto-spike on the checkboxes alone.
 - 2026-08-09 14:35 | agent-sess-ec39663a | claimed
+- 2026-08-09 14:37 | agent-sess-ec39663a | released - Re-released without further progress: still no DITTO_OFFLINE_LICENSE_TOKEN. Blocker and the 'next re-offers this card forever' board defect are filed under board/requests/2026-08-09-SP3-sp3-needs-a-credential-no-agent-can-obta.md. Do not re-claim until the token exists.
