@@ -2,10 +2,10 @@
 
 ```yaml
 id: SP5
-status: todo
-owner: ""
-claimed_at: ""
-heartbeat: ""
+status: claimed
+owner: agent-sess-a860aca9
+claimed_at: 2026-08-09 14:32
+heartbeat: 2026-08-09 14:32
 reviewer: ""
 branch: spike/SP5-presence-platform
 stage: 0
@@ -48,3 +48,4 @@ A human makes the platform choice, then:
 ## Log
 
 <!-- newest last · `YYYY-MM-DD HH:MM | session | note` -->
+- 2026-08-09 14:32 | agent-sess-a860aca9 | claimed
