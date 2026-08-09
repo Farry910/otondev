@@ -5,7 +5,7 @@ id: SP1
 status: claimed
 owner: agent-sess-83866095
 claimed_at: 2026-08-09 13:51
-heartbeat: 2026-08-09 13:57
+heartbeat: 2026-08-09 14:07
 reviewer: ""
 branch: spike/SP1-windows-session
 stage: 0
@@ -32,7 +32,7 @@ owns: spikes/windows-session/**
 
 - [ ] a session-0 service launches an interactive companion process in a real logged-in session
 - [ ] the pair survives reboot, logoff, lock, and reconnect, or the exact failure mode is documented
-- [ ] the companion drives a target application and reports a postcondition, not just "the call returned"
+- [x] the companion drives a target application and reports a postcondition, not just "the call returned"
 - [ ] the companion runs **non-administrator** and the service never exposes a privileged UI
 - [ ] local IPC is mutually authenticated and ACL-restricted; an unauthorized local caller is rejected
 - [ ] measured: companion start latency, reconnect latency, and behaviour with the control plane unreachable
