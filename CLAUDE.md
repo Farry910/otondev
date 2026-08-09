@@ -11,13 +11,22 @@ board decides what you work on. Keep going until the board says there is nothing
 .\board\scripts\board.ps1 next
 ```
 
-`next` atomically picks the best available card and claims it for you. Exit codes:
+`next` reads the live board — who is working on what — then ranks every available card and claims the
+best one that does not collide with work in flight. **A collision is never a reason to stop.** If the
+card it wanted is taken mid-pick it takes the next one; if all of them go, it looks for review work,
+then returns claims whose owner has gone silent, and only then reports that it is blocked. You do not
+need to handle any of that; just read the exit code.
 
 | Code | Meaning | What you do |
 |---|---|---|
 | 0 | a card was claimed for you | work it (below) |
 | 3 | nothing available | print why (the command explains), then **stop** |
 | 4 | you already hold a card | finish or release it first |
+| 5 | a precondition was refused | read the one-line reason and adjust; this is normal |
+| 1 | the board itself is broken | stop and report it |
+
+If you would rather idle than stop when the board is momentarily full, `next -Wait` parks and claims
+the moment anything frees up. Use it when you know a peer is about to land W0.
 
 ### Working a card
 
@@ -32,6 +41,8 @@ board decides what you work on. Keep going until the board says there is nothing
    your fake is worse than your own package slipping.
 6. Tick each exit criterion as you genuinely meet it:
    `board.ps1 check <ID> -Note "<text from the criterion>"`
+   `check` and `fake` also mark you alive. If you go a long stretch without either — a deep debugging
+   run, a long build — run `board.ps1 beat <ID>` so another agent does not reap your claim.
 7. When all criteria are ticked and tests pass offline with peers faked:
    - `git rebase origin/main`
    - run the tests again
@@ -57,18 +68,24 @@ merged. Finishing without pushing stalls every session waiting on you.
   assumption; do not block on it.
 - **Never force-push**, and never force-push the board. A rejected push means another session landed
   first; re-read and retry.
+- **Never take a card off another session by judgment.** "The worktree looks untouched" is not
+  evidence — that exact reasoning has already stolen a live claim here. Liveness is measured: only
+  `board.ps1 reap` may return a claim, and only after the owner has been silent past the TTL.
 - **Never tick a criterion you have not actually met**, and never `-Force` a `finish` to get past a
   failing test. The checkboxes are what other sessions trust.
 - **S4, S5, S10 do not self-approve.** `finish` stops them at `in-review` for independent review.
 
 ## Stop and ask the user when
 
-- `next` returns 3 and the remaining work is `gated` — those need a human decision (a Stage-0 spike
-  result, or the meeting-platform choice). Say which gate and stop.
+- `next` returns 3 and everything left is `gated`. Those need a human decision. Say **which gate**, and
+  say whether the card that produces its evidence (`SP1`–`SP5`) is done, in flight, or unclaimed —
+  `next` prints that link for you. If a producing spike is still unclaimed, that is work, not a gate:
+  run `next` again rather than stopping.
 - A rebase onto `main` conflicts.
 - The card's spec contradicts the design docs, or the work cannot be done as specified.
 
-Otherwise: keep working. Do not check in between cards.
+Otherwise: keep working. Do not check in between cards. In particular, do **not** stop because another
+agent holds the card you wanted — that is the one case `next` is built to handle for you.
 
 ## Where things are
 
