@@ -1,0 +1,75 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Board writes go straight to main by design (board/README.md §2). Cancel superseded runs
+# on a branch, never on main.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+env:
+  # Nothing in this pipeline may reach a network service. Property 6 of an independent
+  # package is that its tests are green offline with every peer faked.
+  CI: 'true'
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The ownership diff needs main to compare against.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      # Build first: the boundary cruise resolves cross-package imports through each
+      # package's `exports` field, which points at dist.
+      - name: Typecheck and build
+        run: pnpm run typecheck
+
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Import boundaries
+        run: pnpm run lint:boundaries
+
+      - name: Path ownership — every tracked file has exactly one owner
+        run: pnpm run check:ownership
+
+      - name: Path ownership — this branch changed only what its card owns
+        if: github.event_name == 'pull_request'
+        run: node scripts/check-path-ownership.mjs diff --base origin/${{ github.base_ref }} --branch ${{ github.head_ref }}
+
+      - name: Test
+        run: pnpm run test
+
+  # Kept separate so a red conformance report is legible at a glance rather than buried in
+  # the middle of the main job's log.
+  conformance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      # The report imports the packages through their `exports` field, so it needs a build.
+      - run: pnpm run typecheck
+      - name: Fake-parity report
+        run: node scripts/conformance-report.mjs

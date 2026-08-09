@@ -1,0 +1,25 @@
+{
+  "name": "@otondev/contracts",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Normative schemas, envelope rules, version negotiation and the error contract. The one package every other package reads.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./schemas/*.json": "./schemas/*.json"
+  },
+  "files": ["dist", "schemas"],
+  "scripts": {
+    "build": "tsc -b",
+    "emit": "tsx src/bin/emit-json-schema.ts",
+    "emit:check": "tsx src/bin/emit-json-schema.ts --check"
+  },
+  "dependencies": {
+    "zod": "^4.1.0"
+  }
+}

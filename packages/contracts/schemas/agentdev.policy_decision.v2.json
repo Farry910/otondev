@@ -1,0 +1,257 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.otondev.dev/agentdev.policy_decision.v2.json",
+  "title": "agentdev.policy_decision.v2",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "type": "string",
+      "const": "agentdev.policy_decision.v2"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^pdec_[0-9A-HJKMNP-TV-Z]{26}$"
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^ten_[0-9A-HJKMNP-TV-Z]{26}$"
+    },
+    "agent_id": {
+      "type": "string",
+      "pattern": "^agt_[0-9A-HJKMNP-TV-Z]{26}$"
+    },
+    "workflow_id": {
+      "type": "string",
+      "pattern": "^wf_[0-9A-HJKMNP-TV-Z]{26}$"
+    },
+    "correlation_id": {
+      "type": "string",
+      "pattern": "^cor_[0-9A-HJKMNP-TV-Z]{26}$"
+    },
+    "causation_id": {
+      "type": "string",
+      "pattern": "^[a-z]+_[0-9A-HJKMNP-TV-Z]{26}$"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+    },
+    "producer": {
+      "type": "object",
+      "properties": {
+        "service": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "instance": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        }
+      },
+      "required": [
+        "service",
+        "instance",
+        "version"
+      ]
+    },
+    "data_classes": {
+      "minItems": 1,
+      "maxItems": 7,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "public",
+          "internal",
+          "internal_source",
+          "customer",
+          "confidential",
+          "restricted",
+          "secret"
+        ]
+      }
+    },
+    "integrity": {
+      "type": "object",
+      "properties": {
+        "alg": {
+          "type": "string",
+          "const": "sha256"
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "alg",
+        "digest"
+      ]
+    },
+    "trace": {
+      "type": "object",
+      "properties": {
+        "trace_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{32}$"
+        },
+        "span_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{16}$"
+        }
+      },
+      "required": [
+        "trace_id",
+        "span_id"
+      ]
+    },
+    "subject": {
+      "type": "object",
+      "properties": {
+        "agent_id": {
+          "type": "string",
+          "pattern": "^agt_[0-9A-HJKMNP-TV-Z]{26}$"
+        },
+        "workload_id": {
+          "type": "string",
+          "pattern": "^wl_[0-9A-HJKMNP-TV-Z]{26}$"
+        }
+      },
+      "required": [
+        "agent_id",
+        "workload_id"
+      ]
+    },
+    "action": {
+      "type": "string",
+      "enum": [
+        "worker.command",
+        "worker.file_write",
+        "git.create_branch",
+        "git.commit",
+        "git.push",
+        "git.open_draft_pr",
+        "git.open_pr",
+        "jira.comment",
+        "jira.transition",
+        "slack.post",
+        "staging.deploy",
+        "cognition.generate",
+        "memory.write",
+        "presence.speak"
+      ]
+    },
+    "resource": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 512,
+      "pattern": "^[a-z][a-z0-9_]*:[^\\s]+$"
+    },
+    "environment": {
+      "type": "string",
+      "enum": [
+        "dev",
+        "nonprod",
+        "staging",
+        "prod"
+      ]
+    },
+    "parameter_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "plan_id": {
+      "type": "string",
+      "pattern": "^plan_[0-9A-HJKMNP-TV-Z]{26}$"
+    },
+    "autonomy_level": {
+      "type": "string",
+      "enum": [
+        "A0",
+        "A1",
+        "A2",
+        "A3",
+        "A4"
+      ]
+    },
+    "decision": {
+      "type": "string",
+      "enum": [
+        "allow",
+        "deny",
+        "require_approval"
+      ]
+    },
+    "policy_bundle": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*@sha256:[0-9a-f]{64}$"
+    },
+    "constraints": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "maxLength": 64
+      },
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "string",
+            "maxLength": 256
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "boolean"
+          }
+        ]
+      }
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+    },
+    "reason_codes": {
+      "minItems": 1,
+      "maxItems": 16,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 64,
+        "pattern": "^[A-Z][A-Z0-9_]*$"
+      }
+    }
+  },
+  "required": [
+    "schema",
+    "id",
+    "tenant_id",
+    "workflow_id",
+    "correlation_id",
+    "created_at",
+    "producer",
+    "data_classes",
+    "integrity",
+    "subject",
+    "action",
+    "resource",
+    "environment",
+    "parameter_digest",
+    "plan_id",
+    "autonomy_level",
+    "decision",
+    "policy_bundle",
+    "constraints",
+    "expires_at",
+    "reason_codes"
+  ]
+}

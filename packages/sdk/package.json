@@ -1,0 +1,31 @@
+{
+  "name": "@otondev/sdk",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The seam: a typed client interface for every S1-S20 service, a minimal in-memory fake for each, the emergency-stop control hooks, and the logging + OTel bootstrap.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.205.0",
+    "@opentelemetry/resources": "^2.1.0",
+    "@opentelemetry/sdk-trace-node": "^2.1.0",
+    "@opentelemetry/semantic-conventions": "^1.37.0",
+    "@otondev/contracts": "workspace:*",
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "@otondev/testkit": "workspace:*"
+  }
+}

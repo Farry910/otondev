@@ -1,0 +1,69 @@
+# Local development dependencies. Shared file — owned by the W0 / S20 session
+# (implementation-plan §6 rule 4). Nothing in `pnpm test` needs any of it: the test suite is
+# offline with every peer faked, and this compose file exists for the integration slice
+# (S20) and for running a real service against a real store.
+#
+# One PostgreSQL instance with a schema per service (implementation-plan §2). Schemas are a
+# boundary, not a convenience: no service reads another's tables, and the grants below make
+# that a permission rather than a promise.
+
+services:
+  postgres:
+    image: postgres:16.4-alpine
+    environment:
+      POSTGRES_USER: otondev
+      POSTGRES_PASSWORD: dev-only-not-a-secret
+      POSTGRES_DB: otondev
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./infra/dev/postgres:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U otondev -d otondev']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # Content-addressed artifact store for S9 (evidence, logs, normalized payloads).
+  minio:
+    image: minio/minio:RELEASE.2024-09-13T20-26-02Z
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: otondev
+      MINIO_ROOT_PASSWORD: dev-only-not-a-secret
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ['CMD', 'mc', 'ready', 'local']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # OTel collector: the sink the SDK bootstrap exports to when OTEL_EXPORTER_OTLP_ENDPOINT
+  # is set. Traces land in Jaeger; metrics are scraped from the collector's Prometheus port.
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.109.0
+    command: ['--config=/etc/otel/config.yaml']
+    volumes:
+      - ./infra/dev/otel/collector.yaml:/etc/otel/config.yaml:ro
+    ports:
+      - '4317:4317' # OTLP gRPC
+      - '4318:4318' # OTLP HTTP
+      - '8889:8889' # Prometheus scrape
+    depends_on:
+      - jaeger
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.60
+    environment:
+      COLLECTOR_OTLP_ENABLED: 'true'
+    ports:
+      - '16686:16686' # UI
+
+volumes:
+  postgres-data:
+  minio-data:
