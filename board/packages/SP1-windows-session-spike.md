@@ -5,7 +5,7 @@ id: SP1
 status: claimed
 owner: agent-sess-83866095
 claimed_at: 2026-08-09 13:51
-heartbeat: 2026-08-09 14:07
+heartbeat: 2026-08-09 14:08
 reviewer: ""
 branch: spike/SP1-windows-session
 stage: 0
@@ -36,7 +36,7 @@ owns: spikes/windows-session/**
 - [ ] the companion runs **non-administrator** and the service never exposes a privileged UI
 - [x] local IPC is mutually authenticated and ACL-restricted; an unauthorized local caller is rejected
 - [x] measured: companion start latency, reconnect latency, and behaviour with the control plane unreachable
-- [ ] `spikes/windows-session/FINDINGS.md` records a **kill-or-continue verdict**, the evidence behind it, and the architecture consequences if it is "kill"
+- [x] `spikes/windows-session/FINDINGS.md` records a **kill-or-continue verdict**, the evidence behind it, and the architecture consequences if it is "kill"
 - [x] the finding names which S16/S17 exit criteria are now known to be reachable and which are still unproven
 
 ## Handing the result back
