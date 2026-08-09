@@ -2,9 +2,9 @@
 
 ```yaml
 id: SP3
-status: claimed
-owner: agent-bbf05b75
-claimed_at: 2026-08-09 14:00
+status: todo
+owner: 
+claimed_at: 
 heartbeat: 2026-08-09 14:14
 reviewer: ""
 branch: spike/SP3-ditto-behaviour
@@ -47,3 +47,4 @@ owns: spikes/ditto-behaviour/**
 
 <!-- newest last · `YYYY-MM-DD HH:MM | session | note` -->
 - 2026-08-09 14:00 | agent-bbf05b75 | claimed
+- 2026-08-09 14:17 | agent-bbf05b75 | released - Work landed on main (1b37783). 3 of 8 criteria met; FINDINGS.md gives verdict CONTINUE and the gate stays closed. The remaining 5 all need an offline licence token from portal.ditto.live -- set DITTO_OFFLINE_LICENSE_TOKEN and run 'npm run sync; npm run report' in spikes/ditto-behaviour and the skipped rows become real results with no code change. Releasing rather than force-finishing: the unchecked boxes are accurate.
