@@ -66,21 +66,43 @@ participants in the conference must be enrolled in the Developer Preview Program
 every human attendee to enrol makes this unusable for meetings with anyone outside the pilot,
 independent of the missing speech capability.
 
-## Consent and disclosure obligations (exit criterion 2) — partially answered
+## Consent and disclosure obligations (exit criterion 2)
 
-What is established: Zoom applies recording-consent disclaimers and notification prompts at the
-account/meeting level, and Zoom states RTMS includes participant notification and consent
-controls. Teams' real-time media path is built around Compliance Recording as a first-class
-scenario, which carries recording-notification behaviour.
+The good news for the design: **on both Zoom and Teams the platform emits the notice itself.**
+Disclosure of *recording* is not something the application has to implement, and not something it
+can suppress. That removes a class of compliance risk the design was carrying, and it changes
+what the `DISCLOSED` state in the meeting FSM is actually for.
 
-**This criterion is not fully met and should not be treated as answered.** The specific
-obligations each platform *imposes on the application* — what notice must be shown, whether the
-platform emits it or the app must, whether consent denial is surfaced as an event the app can
-act on — were not confirmed against primary documentation in this spike. The relevant Zoom
-support articles (recording consent disclaimer, recording notifications, providing consent to be
-recorded) are the right starting points and are listed in Sources. This matters more than usual
-here because the presence design makes disclosure a state in the meeting FSM (`DISCLOSED`) and
-makes consent withdrawal a failure-behaviour row; both need platform-level truth, not inference.
+**Zoom** prompts automatically and treats refusal as departure. Participants "are asked to
+provide consent"; to refuse, a participant is instructed to *"Click **Leave** and then **Leave
+Meeting** to opt out and exit the meeting."* The prompt also reaches people already present:
+*"Participants already in the meeting with active audio and video when the host starts recording
+will be prompted for consent."* Consequence for the design: **consent is binary and terminal.**
+There is no "stay but do not record me" state to model — a participant who objects is gone, and
+the meeting continues without them.
+
+**Teams** enforces notification through policy rather than through the app. Recorded users
+*"Be notified when recording is in progress"* and *"Be informed when policy and/or recorder error
+is causing changes in calling behavior."* Notice is visual on Teams desktop/web/mobile/Phones/
+Rooms and **audio** on SIP phones, Skype for Business, audio conferencing and PSTN callers — so a
+dial-in attendee hears a spoken notice. Note the asymmetry the docs are explicit about:
+*"users might not be able to disable the recording and might not have access to the recording."*
+Teams' model is notification, not consent.
+
+**Google Meet** was not established on this point and remains open — though it is moot for the
+recommendation, since Meet is ruled out on capability grounds below.
+
+**One constraint found here outweighs the rest.** The Teams compliance-recording path is fenced
+by a certification program and an explicit scope statement: *"This solution is designed
+specifically to turn on policy-based compliance recording with Teams. **Any other use of this
+solution isn't supported.**"* and *"Microsoft only supports compliance recording solutions from
+the listed, certified partners."* The documentation lists ~19 certified partners by name. Read
+together with *"Real-time Media bots are not recommended for AI agent scenarios"*, the position
+is consistent and unambiguous: **Microsoft supports in-meeting media bots for compliance
+recording by certified partners, and this design is not that.** It also carries hard operational
+requirements — the recorder bot *"must run on a Windows Virtual Machine and be deployed in
+Azure"*, with specific inbound/outbound firewall IP ranges — plus per-user M365 A3/A5/E3/E5-class
+licensing, and it is tested to 750 participants per meeting.
 
 ## Voice path (exit criterion 3) — blocked, with the floor measured
 
@@ -197,12 +219,21 @@ of S15 but not the speech half, on any timeline the vendor currently documents.
 
 ## Recommendation — input to the decision, not the decision
 
-1. **If a speaking agent is non-negotiable for Stage 3, the platform is Teams**, and the cost of
-   that is accepting the app-hosted media bot path: `Calls.AccessMedia.All`, C#/.NET on Windows
-   Server in Azure, and a conversation with Microsoft about the partner/certification route that
-   its documentation implies. Worth noting that this cost is lower for *this* design than for
-   most: S16 and S17 already commit to a Windows/.NET presence component, so the toolchain and
-   the operational surface are ones the project is taking on anyway.
+1. **If a speaking agent is non-negotiable for Stage 3, the only candidate is Teams — and it is
+   a commercial question before it is an engineering one.** The technical path exists and is well
+   specified: `Calls.AccessMedia.All`, C#/.NET on a Windows Server VM in Azure, 16 kHz PCM frames
+   at 50 fps, with active/dominant-speaker signals that suit the design's turn-taking rules. Some
+   of that cost the project is paying anyway, since S16 and S17 already commit to a Windows/.NET
+   presence component.
+
+   But the gating constraint is not infrastructure. Microsoft supports in-meeting media bots for
+   **policy-based compliance recording by certified partners**, states that *"any other use of
+   this solution isn't supported"*, and separately says real-time media bots are *"not
+   recommended for AI agent scenarios"*. Building on it anyway means running unsupported, on a
+   platform capability that could be narrowed without notice, with no support path when it
+   breaks. That is a risk the project can choose to take; it is not one an engineering decision
+   should absorb silently, which is why it belongs in this recommendation rather than in a
+   backlog ticket.
 
 2. **Otherwise, split presence into listen-and-contribute now, speak later.** All three platforms
    support receiving audio; all three support the agent contributing in meeting chat. That
@@ -235,10 +266,12 @@ Primary documentation, quoted above:
 - [Microsoft — Real-time Media Calls and Meetings for Bots](https://learn.microsoft.com/en-us/microsoftteams/platform/bots/calls-and-meetings/real-time-media-concepts)
 - [Microsoft — Requirements for application-hosted media bots](https://learn.microsoft.com/en-us/microsoftteams/platform/bots/calls-and-meetings/requirements-considerations-application-hosted-media-bots)
 - [Google — Meet Media API overview](https://developers.google.com/workspace/meet/media-api/guides/overview)
+- [Zoom — Providing consent to be recorded](https://support.zoom.com/hc/en/article?id=zm_kb&sysparm_article=KB0059819)
+- [Microsoft — Teams compliance recording (third-party)](https://learn.microsoft.com/en-us/microsoftteams/teams-recording-compliance) (notification methods, certification program, support boundaries, bot hosting requirements)
 - [OpenAI — Realtime cost management](https://developers.openai.com/api/docs/guides/realtime-costs) (audio token conversion) · [Pricing](https://developers.openai.com/api/docs/pricing)
 
 Consulted but **not** confirmed against a primary reference page — flagged in the text:
 
-- [Zoom — recording consent disclaimer](https://support.zoom.us/hc/en-us/articles/360026909191-Customizing-the-recording-consent-disclaimer) · [recording notifications](https://support.zoom.us/hc/en-us/articles/360000486746-Modifying-recording-notifications) · [providing consent to be recorded](https://support.zoom.us/hc/en-us/articles/360061691631-Providing-consent-to-be-recorded)
 - [Microsoft Copilot Studio — add agents to Teams meetings](https://learn.microsoft.com/en-us/power-platform/release-plan/2024wave1/microsoft-copilot-studio/add-copilots-teams-meetings)
-- [Zoom — Developer pricing](https://zoom.us/pricing/developer)
+- [Zoom — Developer pricing](https://zoom.us/pricing/developer) (RTMS credit consumption per minute not published)
+- Google Meet consent/recording-disclosure obligations: not established.
