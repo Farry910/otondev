@@ -23,7 +23,7 @@ fake: n/a
 ## Exit criteria
 
 - [x] pnpm workspace, `tsconfig.base`, lint, test runner, CI, `docker-compose.dev.yml`
-- [ ] import-boundary rules (`dependency-cruiser`) and the path-ownership check both fail the build when violated
+- [x] import-boundary rules (`dependency-cruiser`) and the path-ownership check both fail the build when violated
 - [ ] every schema in [contracts-and-data](../../doc/02-architecture/contracts-and-data.md) exists as Zod with JSON Schema emitted
 - [ ] envelope validation and version negotiation, **failing closed on unknown major**
 - [ ] the error-code enum from contracts §11
