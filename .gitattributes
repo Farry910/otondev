@@ -1,0 +1,4 @@
+# Board and docs are LF everywhere. Without this, git reports an LF->CRLF conversion on every
+# board write and the warning drowns the command's actual output.
+* text=auto eol=lf
+*.png binary

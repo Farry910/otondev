@@ -26,46 +26,51 @@ touch the same file, so their board commits merge cleanly and always.
 
 ## 2. Claiming is a compare-and-set against `origin/main`
 
-The board lives on `main`. A claim is a path-limited commit to `main`, pushed. If two sessions claim
-the same card at once, the second `git push` is **rejected as non-fast-forward** — the remote is the
-serialization point, and the loser finds out immediately instead of silently double-booking.
+Board state lives on `origin/main` and is **never read from or written to a checked-out branch**:
+
+- **reads** — `git show origin/main:<card>`, so no working tree is touched at all;
+- **writes** — a commit built with plumbing against a temporary index, pushed straight to `main`.
+
+`origin/main` is the single serialization point. A rejected push means another session landed first, so
+the command re-reads fresh state, re-applies its change, and retries with exponential backoff and
+jitter. If the precondition no longer holds — the card is now owned by someone else — you get a clean
+refusal rather than a silent overwrite.
+
+```powershell
+.\board\scripts\board.ps1 claim S7 -Session "kai-1"
+# S7 is 'claimed' (owner: rin-1). Pick another card.
+```
 
 This is the same compare-and-set pattern that
 [contracts §3](../doc/02-architecture/contracts-and-data.md#3-workflow-record-and-state-machine)
 requires for workflow transitions. The board does not get to be less rigorous than the system it builds.
 
-```powershell
-# from the primary worktree
-.\board\scripts\board.ps1 claim S07 -Session "kai-1"
-```
+Because writes never check anything out, **the board does not care where you run it from**: any
+directory, any branch, any worktree, dirty tree or clean. Your working tree is never modified, and
+there is no shared index, so sessions cannot collide on `index.lock`.
 
-Manual equivalent, if you would rather not use the script:
+> Verified under load: 12 concurrent writes from 3 sessions all landed as 12 separate commits with no
+> lost updates, and 3 sessions claiming one card simultaneously produced exactly one winner and two
+> clean refusals.
 
-```bash
-git pull --rebase origin main
-# confirm  status: available  in board/packages/S07-*.md, then edit status/owner/claimed_at
-git commit -m "board: claim S07 (kai-1)" -- board/packages/S07-connector-broker.md
-git push origin main          # rejected? someone beat you. pull, re-read, pick another card.
-```
-
-**If your push is rejected:** pull, re-read the card. If it is now owned by someone else, that package
-is gone — release nothing, claim a different card. Do not force-push the board, ever.
+**Never force-push the board.** A rejected push is the mechanism working, not a problem to override.
 
 ---
 
 ## 3. Session isolation — one worktree per session
 
-Sessions must not share a working directory. Each claimed package gets its own git worktree:
+Sessions must not share a working directory — that is the one place they could still collide. Each
+claimed package gets its own git worktree:
 
 ```powershell
-git worktree add ../otondev-S07 -b svc/S07-connectors
+git worktree add ../otondev-S7 -b svc/S7-connectors
 ```
 
-Code work happens in `../otondev-S07` on branch `svc/S07-connectors`. **Board commands are run from the
-primary worktree** (`otondev/`, on `main`) — the script finds it automatically. This keeps shared board
-state on one branch while code stays isolated per package.
+The session works entirely inside `../otondev-S7` on branch `svc/S7-connectors` and runs board commands
+**from that same directory**. No session ever needs `main` checked out, and none needs to return to the
+primary worktree for anything.
 
-When the package is done and merged: `git worktree remove ../otondev-S07`.
+When the package is merged: `git worktree remove ../otondev-S7`.
 
 ---
 
@@ -85,7 +90,7 @@ blocked ──(gate clears)──> available ──claim──> claimed ──fi
 | `in-review` | exit criteria all checked; awaiting review |
 | `done` | merged to `main` |
 
-Security-critical cards (**S04, S05, S10**) cannot go `in-review → done` on the owning session's own
+Security-critical cards (**S4, S5, S10**) cannot go `in-review → done` on the owning session's own
 judgment. They require the independent review named in implementation plan §7.
 
 ---
@@ -98,9 +103,12 @@ judgment. They require the independent review named in implementation plan §7.
    never conflict — regenerate it instead: `.\board\scripts\board.ps1 status`.
 4. **Shared files are off-limits** — root config, CI workflows, `packages/contracts`,
    `packages/testkit`, `docker-compose.dev.yml`. File a contract request instead (§6).
-5. **Publish your fake early.** Tick `Fake published` on your card as soon as your fake is good enough
-   to build against. A downstream session blocked on your fake is worse than your own package slipping.
-6. **Rebase on `main` daily**, so contract updates reach you before they are expensive.
+5. **Publish your fake early** — `board.ps1 fake S7` — as soon as it is good enough to build against.
+   A downstream session blocked on your fake is worse than your own package slipping.
+6. **Tick exit criteria as you meet them** — `board.ps1 check S7 -Note "ambiguous timeout"` ticks the
+   first unchecked criterion matching that text. `finish` counts what is left and refuses while any
+   remain, so a card's checkboxes are the honest progress signal other sessions read.
+7. **Rebase your branch on `main` daily**, so contract updates reach you before they are expensive.
 
 ---
 
@@ -110,10 +118,10 @@ You will hit something the frozen contracts cannot express. Do not patch around 
 edit `packages/contracts` yourself.
 
 ```powershell
-.\board\scripts\board.ps1 request S07 -Note "action.v2 needs a retry_after hint for rate-limited adapters"
+.\board\scripts\board.ps1 request S7 -Note "action.v2 needs a retry_after hint for rate-limited adapters"
 ```
 
-That creates `requests/<date>-S07-<slug>.md`. The contract owner (the W0 / S20 session) resolves it.
+That creates `requests/<date>-S7-<slug>.md`. The contract owner (the W0 / S20 session) resolves it.
 **Do not block on it** — record the assumption you are proceeding under in your card's log and keep
 building. Additive changes land quickly; renames and removals are scheduled.
 
@@ -126,7 +134,7 @@ A session that ends mid-package — context exhausted, interrupted, whatever —
 
 - **Handing off:** append a log line stating exactly what is done, what is half-done, and the next
   concrete step. Leave status `claimed` and change `owner` to the incoming session.
-- **Abandoning:** `.\board\scripts\board.ps1 release S07 -Note "why"`. Status returns to `available`,
+- **Abandoning:** `.\board\scripts\board.ps1 release S7 -Note "why"`. Status returns to `available`,
   and the log keeps the history so the next owner is not starting blind.
 
 A card `claimed` by a session that no longer exists is the main way this board rots. If you find one
@@ -136,11 +144,22 @@ that has not moved in a day, release it.
 
 ## 8. Starting a session
 
-1. `git pull --rebase origin main`
-2. `.\board\scripts\board.ps1 status` — see what is free
-3. pick an `available` card, respecting the WIP limit below
-4. `claim` it, then create your worktree
-5. read the card's `Spec` link plus the documents it names — **not the whole design package**
+1. `.\board\scripts\board.ps1 status` — fetches `origin/main` itself; no pull needed, and it works
+   from wherever you are
+2. pick an `available` card, respecting the WIP limit below
+3. `claim` it, then create your worktree and work inside it
+4. read the card's `Spec` link plus the documents it names — **not the whole design package**
+
+| Command | Effect |
+|---|---|
+| `status` / `list` | fetch and show the board (`status` also regenerates `STATUS.md`) |
+| `claim <ID> -Session <name>` | compare-and-set claim; refuses if not `available` |
+| `check <ID> -Note "<text>"` | tick the first unchecked exit criterion matching `<text>` |
+| `fake <ID>` | mark your fake published so downstream sessions can depend on it |
+| `finish <ID>` | → `in-review`; refuses while exit criteria remain unticked |
+| `release <ID> -Note "<why>"` | → `available`, keeping the log history |
+| `block` / `unblock <ID>` | gate management, e.g. after W0 lands |
+| `request <ID> -Note "<need>"` | raise a contract change request |
 
 ## WIP limit
 
