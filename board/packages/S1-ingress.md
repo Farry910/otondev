@@ -11,7 +11,7 @@ depends_on: W0
 gate: none
 gate_cleared: yes
 fake: no
-heartbeat: 2026-08-09 14:57
+heartbeat: 2026-08-09 15:06
 ```
 
 **Owns** — `services/ingress/**`, Postgres schema `ingress`
@@ -21,7 +21,7 @@ heartbeat: 2026-08-09 14:57
 
 ## Exit criteria
 
-- [ ] per-source webhook signature verification, replay window, schema and size limits
+- [x] per-source webhook signature verification, replay window, schema and size limits
 - [ ] normalization to `agentdev.event.v2` with untrusted fields explicitly labelled
 - [ ] dedupe on `(tenant, source, source_event_id)`; a duplicate returns the **existing** canonical event ID
 - [ ] acknowledge only after authentication, dedupe persistence, **and** durable enqueue all succeed
