@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Otondev.Spike.Supervisor</RootNamespace>
+    <AssemblyName>Otondev.Spike.Supervisor</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Otondev.Spike.Common\Otondev.Spike.Common.csproj" />
+  </ItemGroup>
+</Project>

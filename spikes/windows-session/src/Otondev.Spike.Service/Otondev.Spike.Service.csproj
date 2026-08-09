@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>Otondev.Spike.Service</AssemblyName>
+    <RootNamespace>Otondev.Spike.Service</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Otondev.Spike.Common\Otondev.Spike.Common.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Supplies ServiceBase, including the session-change notifications the whole
+         logoff/lock/reconnect criterion depends on. -->
+    <PackageReference Include="System.ServiceProcess.ServiceController" Version="10.0.0" />
+  </ItemGroup>
+</Project>
