@@ -2,9 +2,9 @@
 
 ```yaml
 id: SP1
-status: claimed
-owner: agent-bbf05b75
-claimed_at: 2026-08-09 13:03
+status: todo
+owner: 
+claimed_at: 
 heartbeat: 2026-08-09 13:07
 reviewer: ""
 branch: spike/SP1-windows-session
@@ -52,3 +52,4 @@ A human reads `FINDINGS.md` and, if the verdict is continue, runs:
 
 <!-- newest last · `YYYY-MM-DD HH:MM | session | note` -->
 - 2026-08-09 13:03 | agent-bbf05b75 | claimed
+- 2026-08-09 13:19 | agent-bbf05b75 | released - Harness + reconciliation committed on spike/SP1-windows-session (not pushed). 4 sub-questions answered with evidence; the central criterion needs LocalSystem and reboot/logoff need a dedicated machine — see spikes/windows-session/FINDINGS.md. Needs a human decision on where to run it.
