@@ -22,7 +22,7 @@ heartbeat: 2026-08-09 15:06
 ## Exit criteria
 
 - [x] per-source webhook signature verification, replay window, schema and size limits
-- [ ] normalization to `agentdev.event.v2` with untrusted fields explicitly labelled
+- [x] normalization to `agentdev.event.v2` with untrusted fields explicitly labelled
 - [ ] dedupe on `(tenant, source, source_event_id)`; a duplicate returns the **existing** canonical event ID
 - [ ] acknowledge only after authentication, dedupe persistence, **and** durable enqueue all succeed
 - [ ] out-of-order source version is retained and does not roll state backward
