@@ -31,7 +31,7 @@ owns: spikes/presence-platform/**
 - [x] for each candidate platform: whether a bot can join, be disclosed as an AI, receive audio, and speak — with the API evidence
 - [ ] per platform, the consent and recording-disclosure obligations the platform itself imposes
 - [ ] a candidate voice path measured for round-trip latency, barge-in / interruption handling, and behaviour on reconnect
-- [ ] the data path is documented: what audio or transcript leaves the boundary, to which provider, in which region
+- [x] the data path is documented: what audio or transcript leaves the boundary, to which provider, in which region
 - [ ] cost per meeting-hour estimated for each candidate, with the assumptions stated
 - [ ] the failure modes that would violate the presence SLOs are named per platform
 - [ ] `spikes/presence-platform/FINDINGS.md` presents a **comparison and a recommendation**, explicitly marked as input to a human decision, not as the decision
