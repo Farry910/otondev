@@ -27,7 +27,7 @@ heartbeat: 2026-08-09 14:52
 - [x] the full state machine from contracts §3, with compare-and-set on `state_version`
 - [x] leases carrying owner, expiry, and **fencing token**; timers and wakeups; retry and backoff
 - [x] a transition event persisted for every state change
-- [ ] compensation hooks and the recovery scan for interrupted attempts
+- [x] compensation hooks and the recovery scan for interrupted attempts
 - [ ] two claimants on one workflow: exactly one wins
 - [ ] an expired worker's write is fenced and rejected
 - [ ] crash mid-transition resumes at a safe state
