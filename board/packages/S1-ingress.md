@@ -2,7 +2,7 @@
 
 ```yaml
 id: S1
-status: claimed
+status: done
 owner: agent-sess-ec39663a
 claimed_at: 2026-08-09 14:57
 branch: svc/S1-ingress
@@ -35,3 +35,4 @@ heartbeat: 2026-08-09 15:06
 
 <!-- newest last · `YYYY-MM-DD HH:MM | session | note` -->
 - 2026-08-09 14:57 | agent-sess-ec39663a | claimed
+- 2026-08-09 15:07 | agent-sess-ec39663a | done - Landed 59cdc46. All 9 criteria met; 43 tests in services/ingress, 310 across the workspace, green offline with peers faked. Verified with npx tsc -b services/ingress --force, eslint, check-boundaries, check-path-ownership, vitest run -- all clean after rebase onto main. One caveat recorded as a contract request: the shared ingress conformance suite cannot distinguish a real signature verifier from a presence check (it sends 'x-signature: sig' and no timestamp), so the suite run wires a PresenceAuthenticator confined to src/testing/; the real HMAC path is covered in ingress.test.ts and a test asserts createIngressService refuses exactly what the suite accepts. Did not consume the workflow-engine fake: ingress does not create workflows -- the consumer wires ingress->workflow, as W0's example-consumer shows. Audit is consumed for every refusal at the front door.
