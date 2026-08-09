@@ -2,7 +2,7 @@
 
 ```yaml
 id: SP2
-status: claimed
+status: done
 owner: agent-bbf05b75
 claimed_at: 2026-08-09 13:25
 heartbeat: 2026-08-09 13:54
@@ -47,3 +47,4 @@ owns: spikes/sandbox-isolation/**
 
 <!-- newest last · `YYYY-MM-DD HH:MM | session | note` -->
 - 2026-08-09 13:25 | agent-bbf05b75 | claimed
+- 2026-08-09 13:55 | agent-bbf05b75 | done - exit criteria met
