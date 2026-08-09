@@ -2,10 +2,10 @@
 
 ```yaml
 id: SP2
-status: todo
-owner: ""
-claimed_at: ""
-heartbeat: ""
+status: claimed
+owner: agent-bbf05b75
+claimed_at: 2026-08-09 13:25
+heartbeat: 2026-08-09 13:25
 reviewer: ""
 branch: spike/SP2-sandbox-isolation
 stage: 0
@@ -46,3 +46,4 @@ owns: spikes/sandbox-isolation/**
 ## Log
 
 <!-- newest last · `YYYY-MM-DD HH:MM | session | note` -->
+- 2026-08-09 13:25 | agent-bbf05b75 | claimed
