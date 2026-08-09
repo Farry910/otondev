@@ -98,6 +98,19 @@ importers:
         specifier: workspace:*
         version: link:../contracts
 
+  services/ingress:
+    dependencies:
+      '@otondev/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@otondev/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
+    devDependencies:
+      '@otondev/testkit':
+        specifier: workspace:*
+        version: link:../../packages/testkit
+
   services/verifier:
     dependencies:
       '@otondev/contracts':

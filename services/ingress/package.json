@@ -1,0 +1,25 @@
+{
+  "name": "@otondev/ingress",
+  "version": "0.0.0",
+  "private": true,
+  "description": "S1 - event ingress and dedupe: per-source signature verification, replay window, normalization to agentdev.event.v2, and acknowledge-only-after-durable.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@otondev/contracts": "workspace:*",
+    "@otondev/sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "@otondev/testkit": "workspace:*"
+  }
+}
