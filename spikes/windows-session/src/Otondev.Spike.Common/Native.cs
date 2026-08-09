@@ -47,7 +47,7 @@ public static class Native
         ClientBuildNumber = 9,
     }
 
-    [StructLayout(LayoutKind.Sequential)]
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     private struct WtsSessionInfo
     {
         public int SessionId;
@@ -55,7 +55,15 @@ public static class Native
         public WtsConnectState State;
     }
 
-    [DllImport("wtsapi32.dll", SetLastError = true)]
+    /// <summary>
+    /// <c>CharSet.Unicode</c> is not cosmetic here. Without it P/Invoke binds to
+    /// <c>WTSEnumerateSessionsA</c>, which fills the struct with ANSI pointers while
+    /// <see cref="WtsSessionInfo.WinStationName"/> marshals them as UTF-16 — the call
+    /// "succeeds", the session ids and states are right, and only the station names come back
+    /// as mojibake. That is the shape of bug a spike has to be built to notice, because the
+    /// number it corrupts is the one nobody thinks to check.
+    /// </summary>
+    [DllImport("wtsapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
     private static extern int WTSEnumerateSessions(
         IntPtr hServer, int reserved, int version, out IntPtr ppSessionInfo, out int pCount);
 

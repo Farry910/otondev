@@ -1,102 +1,141 @@
 # SP1 — Windows session spike: findings
 
-**Status: INCOMPLETE — no kill-or-continue verdict yet.** Do not clear the `windows-spike`
-gate on the strength of this document. Four sub-questions are answered with evidence; the
-central one is not, and the reason is environmental rather than technical.
+## Verdict: **CONTINUE**, with the central criterion still unproven
 
-Run on Windows 11 Pro 10.0.26200, .NET 10.0.300, session 1, **unelevated**.
+Nothing found here says the presence architecture cannot work. The opposite: the structural
+choice the design is built on — a non-interactive session-0 service plus a least-privilege
+interactive companion — is **confirmed to be necessary**, and every property that could be
+measured without administrator rights held.
+
+**But do not clear the `windows-spike` gate on this document yet.** Two of the eight exit
+criteria are unproven, and neither is unproven for a technical reason: criterion 1 needs a
+LocalSystem service (an interactive UAC approval that was declined during this run) and
+criterion 2 needs an operator willing to lock, sign out and reboot the machine. §5 is a single
+command that closes both.
+
+Evidence: `results/unelevated-report.md`, rendered from the run tagged `verify-3`.
+Reproduce with `scripts/build.ps1` then `scripts/run-unelevated-pass.ps1`.
 
 ---
 
-## 1. What was actually established
+## 1. Host profile this holds for
 
-Measured by `otondev-spike-harness.exe`; raw output in `results/unelevated.json`.
+| | |
+|---|---|
+| OS | Windows 11 Pro 10.0.26200, session 1, single interactive user |
+| Toolchain | .NET 10.0.300, `net10.0-windows`, no NuGet dependencies beyond the SDK |
+| Caller | `LAPTOP-17SBLA91\Fernando`, **not** elevated, integrity `Medium(0x2000)`, `WinSta0\Default` |
+| Target application | Windows Notepad (not built by us, not cooperating on purpose) |
 
-| Question | Result | Evidence |
+## 2. What held
+
+| Property | Result | Evidence |
 |---|---|---|
-| Can the supervisor find the right session without privilege? | **Yes** | 3 sessions enumerated, active console = 1, one interactive candidate correctly identified. `WTSEnumerateSessions`/`WTSQuerySessionInformation` need no elevation. |
-| Is the privilege boundary the architecture assumes real? | **Yes** | `WTSQueryUserToken` from an unelevated process fails with `ERROR_PRIVILEGE_NOT_HELD` (1314). Only `SE_TCB_NAME` holders can obtain another session's user token. |
-| Does a pipe ACL stop an unauthorized local caller? | **Yes** | A pipe granted only to `LocalService` refused our connect with `UnauthorizedAccessException` — *at the kernel*, before any application code ran. |
-| Does the companion refuse a server it cannot attribute? | **Yes** | With no supervisor pipe present, the companion read a null owner and exited 78 without sending a byte. |
+| The privilege boundary the design assumes is real | **Yes** | `WTSQueryUserToken` from an unelevated process fails `ERROR_PRIVILEGE_NOT_HELD` (1314). Only `SE_TCB_NAME` holders can obtain another session's token. |
+| Companion runs non-administrator | **Yes** | Every companion that handshook: `elevated=False`, `administrator=False`, integrity `Medium(0x2000)`, window station `WinSta0`, desktop `Default`. |
+| Companion drives a real app to a **postcondition** | **2/2** | Text typed into Notepad was read back from **the saved file on disk** *and* from the live UIA tree (`Document/ValuePattern`). Two independent readings, both required to pass. |
+| Unauthorized local caller rejected | **8/8** | Probe, PowerShell, and a companion binary from a different directory all connected and were all refused. **0** admitted. |
+| Companion refuses a rogue server | **Yes** | Against a squatted pipe it disconnected **without sending a byte** — the squatter reported `DEFENDED`. |
+| Containment works with the control plane down | **Yes** | STOP sentinel → companion killed and **relaunch latched off**. No network in the path. |
+| Pair survives the control plane being gone | **Yes** | Breaker opened; companion kept running and kept completing tasks. |
 
-The second row is the useful one. It is easy to read "unelevated process cannot do X" as a
-limitation of the test rig; it is the opposite. If an ordinary process *could* obtain a
-session token, the session-0 service in `secure-box-and-supervision.md` would be
-unnecessary and the isolation story would be substantially weaker than the document claims.
-The design's central structural choice is justified.
+### Measurements
 
-## 2. A concrete implementation constraint for S17
+| Metric | n | Observed |
+|---|---:|---|
+| Companion start (launch → authenticated handshake) | 2 | 156 ms, 344 ms |
+| Reconnect (kill → authenticated companion again) | 1 | 156 ms |
+| Target-application task (launch, type, save, verify) | 2 | 2.44 s, 2.64 s |
+| Local emergency stop (sentinel → reaction) | 2 | 47 ms, 172 ms |
+| Time to notice the control plane is gone | 1 | 2015 ms (2 s connect timeout) |
 
-Windows refuses to impersonate a named-pipe client until the server has read from the pipe.
-`NamedPipeServerStream.RunAsClient` before the first read throws:
+> **These are same-session numbers.** The supervisor launched the companion with
+> `Process.Start`, not `CreateProcessAsUser`. The cross-session path adds token duplication,
+> `CreateEnvironmentBlock` and a window-station switch, so treat 156–344 ms as a floor, not a
+> prediction. Every event carries its launch mode so no same-session number can be quoted as
+> cross-session evidence by accident.
 
-> Unable to impersonate using a named pipe until data has been read from that pipe.
+## 3. Three things S17 must not get wrong
 
-So the server **cannot** identify its caller before reading the first frame. The ordering has
-to be: accept → read one bounded frame → resolve the client SID → check the allow-list → only
-then act on anything.
+**The pipe DACL is not an authentication mechanism on a single-user desktop.** The observed
+DACL grants LocalSystem, Administrators, and the logged-on user. On the presence desktop the
+companion *is* the logged-on user — so every process that user runs satisfies the DACL,
+including anything they can be talked into launching. All eight rejections came from the
+application-layer check (client PID → image path), not from the kernel. S17's criterion "IPC
+ACLs hold against an unauthorized local caller" is therefore only satisfiable with a
+per-process identity check behind the ACL. A dedicated companion account narrows the DACL but
+does not remove the need.
 
-That is safe, because the DACL is the primary gate and the pre-authentication work is limited
-to reading and parsing a length-bounded frame that is never acted upon. It is worth writing
-down because the instinct — authenticate first, then read — is the correct instinct
-everywhere else, and because the natural "optimisation" of folding registration into the
-first command would quietly make it unsafe.
+**The client must authenticate the server, and almost nobody does.** Pipe names are an
+unreserved machine-global namespace. An unprivileged process can create
+`\\.\pipe\otondev-spike-supervisor` before the supervisor and harvest the companion's opening
+frame — which carries session, user SID, and integrity level. The companion reads the pipe
+object's **owner SID** before sending anything and refuses on mismatch; that is what produced
+`DEFENDED`. Creating the first instance with `FirstPipeInstance` is the other half: it turns
+squatting into a loud failure at supervisor startup instead of a silent handover.
 
-## 3. What is NOT established, and why
+**Containment has to latch.** An earlier revision killed the companion on the STOP sentinel and
+let the supervise loop relaunch it 500 ms later — 13 launches in 6 seconds, two companions
+fighting over one desktop. "Stopped" must mean stopped until a human clears it. This was caught
+only because the harness logs every launch with a correlation id.
+
+## 4. What is NOT established, and why
 
 | Criterion | Status | Blocked by |
 |---|---|---|
-| A session-0 service launches an interactive companion in a real logged-in session | **Unproven** | Requires LocalSystem. This shell is not elevated, and elevation is an interactive UAC decision. |
-| Survives reboot | **Unproven** | Requires restarting the host — it would end the operator's own session. |
-| Survives logoff, lock, reconnect | **Unproven** | Each ends or suspends the session in use. Needs a dedicated test machine. |
-| Companion drives a target app and reports a postcondition | **Unproven** | The driver is written (`AppDriver.DriveNotepad`: SendInput to write, UI Automation to read back, agreement is the postcondition) but was not executed to completion — see §4. |
-| Companion runs non-administrator | **Unproven** | Same. |
-| Start / reconnect latency, control plane unreachable | **Unproven** | Same. |
-| IPC refuses a pipe squatted by a *different* local account | **Unproven** | Needs a second local user account. The owner check is implemented and proven against a missing pipe only. |
+| A session-0 service launches an interactive companion in a real logged-on session | **Unproven** | Needs LocalSystem (`SE_TCB_NAME`). Installing the service needs administrator; the UAC prompt was declined during this run. The code path exists and is exercised by `scripts/run-elevated.ps1`. |
+| Survives reboot, logoff, lock, reconnect | **Unproven** | Needs the service installed *and* an operator willing to lock, sign out and restart. No `OnSessionChange` notification was recorded, because a console process does not receive them — only a real service does. |
 
-Nothing here is evidence that the design fails. It is evidence that the questions have not
-been asked yet.
+Neither row is evidence against the design. They are questions that have not been asked yet,
+and §5 asks them.
 
-## 4. State of the code — read this before continuing
+## 5. How to close the gap
 
-**The tree does not currently build.** It contains two overlapping implementations of the same
-spike that were developed in parallel and are only half merged:
-
-- **Spine (keep):** `SupervisorCore.cs`, `ServiceHost.cs` (real SCM service with
-  `StartServiceCtrlDispatcher`, session-change control 0x0E, custom control codes 128/129 for
-  containment), `Launch.cs`, `Protocol.cs` (the `Wire` message set), `IpcClient.cs`,
-  `Evidence.cs`. This is the better design: it is an actual Windows service rather than a
-  substitute, which is what criterion 1 asks for.
-- **Superseded (delete):** `Common/SupervisorHost.cs`, `Supervisor/CompanionLauncher.cs`, and
-  the `Otondev.Spike.Harness` project. Their behaviour is covered by the spine plus the
-  evidence log.
-- **Keep and re-target:** `Companion/AppDriver.cs` — the postcondition driver is independent
-  of the wire protocol and is the answer to criterion 3.
-
-Three concrete gaps:
-
-1. `Supervisor/Program.cs` references `RunSupervisor(...)` and `Current`, neither of which is
-   declared anywhere. It needs a `SupervisorCore` instance holder and a run loop that wires
-   `ServeAsync` + `MonitorAsync` together.
-2. `SupervisorCore.HandleClientAsync` speaks ad-hoc ops (`ready`/`heartbeat`/`result`/`health`)
-   over `Ipc.Message`, while `Protocol.cs` defines a richer typed `Wire` set over
-   `PipeChannel`. `Wire` is the one to keep — its payloads carry the fields the exit criteria
-   need as evidence. `SupervisorCore` and the companion both need to be moved onto it.
-3. `Companion/Program.cs` still speaks the old register/ack protocol and must be rewritten
-   against `Wire` + `IpcClient.ConnectVerified`.
-
-## 5. Next step
-
-The remaining criteria need a **dedicated Windows test machine** and an operator willing to
-reboot and log off it. On that machine, after the merge above:
+From an **administrator** PowerShell, after `scripts\build.ps1`:
 
 ```powershell
-dotnet publish src/Otondev.Spike.Supervisor -c Release -o publish
-dotnet publish src/Otondev.Spike.Companion  -c Release -o publish
-# elevated:
-sc.exe create OtondevSpikeSupervisor binPath= "<abs>\publish\otondev-supervisor.exe" start= auto
-sc.exe start OtondevSpikeSupervisor
-# then: lock, unlock, log off, log on, reboot — reading results/evidence.jsonl after each.
+.\scripts\run-elevated.ps1          # installs the LocalSystem service, runs 90s, prints evidence
+# while it runs: lock the workstation, unlock, sign out, sign back in
+.\scripts\run-elevated.ps1 -Uninstall
 ```
 
-Until that runs, the honest verdict is **not yet determined**, and S16/S17 stay gated.
+Then re-read the report. Criterion 1 is met when a `companion.launch.ok` row shows
+`mode=CrossSession` with a non-elevated token and `used_linked_token` recorded; criterion 2 is
+met when `session.change` rows appear for lock/unlock/logon/logoff and a shutdown/start pair
+brackets a reboot.
+
+The service is throwaway and `-Uninstall` removes it completely.
+
+## 6. S16/S17 exit criteria: reachable vs still unproven
+
+**Known reachable** (measured here):
+
+- S17 "mutually authenticated, ACL-restricted local IPC" — both directions, with the caveat in §3
+- S17 "IPC ACLs hold against an unauthorized local caller" — 8/8 refused, 0 admitted
+- S17 "the companion runs non-administrator" — measured off the live token, not asserted
+- S17 "containment works with the control plane unreachable" — no network in the stop path
+- S17 "health checks cover dependency readiness" — session, companion process, channel,
+  heartbeat freshness and control-plane reachability are separate signals
+- S16 "local emergency stop that works with the network and control plane down" — 47–172 ms
+- S16 "adapter hierarchy … each with postconditions" — the postcondition discipline works: two
+  independent readings, and the weaker one alone would have passed a wrong answer
+
+**Still unproven:**
+
+- S17 "launches and monitors the companion in the intended interactive session" — §4, needs LocalSystem
+- S17 "survives reboot, logoff, lock, and reconnect" — §4, needs an operator
+- S17 "never exposes a privileged UI" — structurally true (the service project references no UI
+  framework and creates no window) but never exercised as an installed service
+- S16 safe-share preflight, overlay, masking, notification-during-share — **not in scope of this
+  spike at all**; SP1 covers the session and process architecture beneath them, nothing above it
+- Anything about a second local account: the squat defence was proven against a rogue pipe owned
+  by the *same* user. A different-account squatter needs a second account and was not tested.
+
+## 7. Handing the result back
+
+Not yet. When §5 has been run and criteria 1 and 2 are ticked on the card:
+
+```powershell
+.\board\scripts\board.ps1 clear-gate S16 -Note "SP1: <verdict summary>"
+.\board\scripts\board.ps1 clear-gate S17 -Note "SP1: <verdict summary>"
+```

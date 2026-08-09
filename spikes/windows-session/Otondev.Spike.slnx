@@ -1,11 +1,8 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/Otondev.Spike.Common/Otondev.Spike.Common.csproj" />
-    <Project Path="src/Otondev.Spike.Companion/Otondev.Spike.Companion.csproj" />
-    <Project Path="src/Otondev.Spike.Intruder/Otondev.Spike.Intruder.csproj" />
-    <Project Path="src/Otondev.Spike.Probe/Otondev.Spike.Probe.csproj" />
     <Project Path="src/Otondev.Spike.Service/Otondev.Spike.Service.csproj" />
-    <Project Path="src/Otondev.Spike.Supervisor/Otondev.Spike.Supervisor.csproj" />
-    <Project Path="src/Otondev.Spike.TargetApp/Otondev.Spike.TargetApp.csproj" />
+    <Project Path="src/Otondev.Spike.Companion/Otondev.Spike.Companion.csproj" />
+    <Project Path="src/Otondev.Spike.Probe/Otondev.Spike.Probe.csproj" />
   </Folder>
 </Solution>

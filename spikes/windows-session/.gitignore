@@ -1,3 +1,5 @@
 bin/
 obj/
 run/
+# scripts/build.ps1 publishes the three executables side by side here.
+out/

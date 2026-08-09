@@ -69,10 +69,20 @@ public static class PipeAuth
         var security = new PipeSecurity();
         var system = new SecurityIdentifier(WellKnownSidType.LocalSystemSid, null);
         var administrators = new SecurityIdentifier(WellKnownSidType.BuiltinAdministratorsSid, null);
+        var self = WindowsIdentity.GetCurrent().User ?? system;
 
-        security.SetOwner(WindowsIdentity.GetCurrent().User ?? system);
+        security.SetOwner(self);
         security.AddAccessRule(new PipeAccessRule(system, PipeAccessRights.FullControl, AccessControlType.Allow));
         security.AddAccessRule(new PipeAccessRule(administrators, PipeAccessRights.FullControl, AccessControlType.Allow));
+
+        // The supervisor's own identity needs FILE_CREATE_PIPE_INSTANCE to add instances after
+        // the first, and a DACL set from scratch does not grant it implicitly — not even to the
+        // object's owner. Under LocalSystem this is already covered by the SYSTEM ACE above and
+        // changes nothing; it only matters when the supervisor runs as an ordinary user, where
+        // omitting it makes the *second* connection fail with ACCESS_DENIED long after the first
+        // one worked.
+        security.AddAccessRule(new PipeAccessRule(self, PipeAccessRights.FullControl, AccessControlType.Allow));
+
         security.AddAccessRule(new PipeAccessRule(
             companionUser,
             PipeAccessRights.ReadWrite | PipeAccessRights.Synchronize,

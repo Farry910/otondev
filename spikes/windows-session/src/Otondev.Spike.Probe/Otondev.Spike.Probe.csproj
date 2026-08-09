@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <RootNamespace>Otondev.Spike.Probe</RootNamespace>
     <AssemblyName>Otondev.Spike.Probe</AssemblyName>
+    <RootNamespace>Otondev.Spike.Probe</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Otondev.Spike.Common\Otondev.Spike.Common.csproj" />

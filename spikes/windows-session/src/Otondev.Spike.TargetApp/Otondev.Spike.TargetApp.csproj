@@ -1,8 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <RootNamespace>Otondev.Spike.TargetApp</RootNamespace>
-    <AssemblyName>Otondev.Spike.TargetApp</AssemblyName>
-    <UseWindowsForms>true</UseWindowsForms>
-  </PropertyGroup>
-</Project>

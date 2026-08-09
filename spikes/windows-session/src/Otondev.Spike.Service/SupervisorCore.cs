@@ -59,6 +59,7 @@ public sealed class SupervisorCore(SupervisorOptions options) : IAsyncDisposable
     private long _relaunchTriggerTick;
     private string _relaunchReason = "initial";
     private int _consecutiveLaunchFailures;
+    private volatile bool _contained;
 
     private sealed record CompanionHandle(
         string LaunchId, int Pid, long LaunchTick, int SessionId,
@@ -268,6 +269,16 @@ public sealed class SupervisorCore(SupervisorOptions options) : IAsyncDisposable
                 return;
             }
 
+            // Containment has to be a latched state, not a one-shot event. The first version of
+            // this spike killed the companion on the STOP sentinel and let the supervise loop
+            // relaunch it half a second later, which produced 13 launches in 6 seconds and two
+            // companions fighting over the same desktop. "Stopped" means stopped until a human
+            // clears it.
+            if (_contained)
+            {
+                return;
+            }
+
             var session = _options.Mode == LaunchMode.CrossSession
                 ? PickTargetSession()
                 : null;
@@ -404,10 +415,17 @@ public sealed class SupervisorCore(SupervisorOptions options) : IAsyncDisposable
             {
                 server = PipeAuth.CreateServer(SpikePaths.PipeName, security, first);
             }
-            catch (IOException ex)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
+                if (ct.IsCancellationRequested)
+                {
+                    break;
+                }
+
                 // FirstPipeInstance failing means the name was already taken — that is the
                 // squatting case, and it must not be papered over as a transient error.
+                // ACCESS_DENIED on a later instance is a different animal: the DACL does not
+                // grant the supervisor FILE_CREATE_PIPE_INSTANCE.
                 SpikeLog.WriteError(
                     first ? "ipc.squat.suspected" : "ipc.instances.exhausted",
                     SpikePaths.PipeName, ex);
@@ -460,6 +478,19 @@ public sealed class SupervisorCore(SupervisorOptions options) : IAsyncDisposable
                 using var rejectChannel = new PipeChannel(server);
                 await rejectChannel.SendAsync(Wire.Rejected, new { reason = decision.Reason }, ct)
                     .ConfigureAwait(false);
+
+                // Let the rejection actually reach the caller. Disconnecting straight after the
+                // write discards whatever is still buffered, so a rejected client sees a broken
+                // pipe instead of a reason — which is indistinguishable from the supervisor
+                // having crashed, and makes the security behaviour impossible to verify.
+                try
+                {
+                    server.WaitForPipeDrain();
+                }
+                catch (Exception ex) when (ex is IOException or ObjectDisposedException)
+                {
+                    // Caller left first; nothing more to deliver.
+                }
                 return;
             }
 
@@ -764,22 +795,40 @@ public sealed class SupervisorCore(SupervisorOptions options) : IAsyncDisposable
         {
             if (File.Exists(sentinel))
             {
+                _contained = true;
                 if (!announced)
                 {
                     announced = true;
+                    var requestedTick = ReadTick(sentinel);
                     SpikeLog.Write("emergency.stop.observed", "STOP sentinel present; containing companion", new
                     {
                         companion_pid = _companion?.Pid ?? 0,
                     });
-                    var current = _companion;
-                    if (current is not null)
+
+                    // Measured separately from the companion's own reaction: the two are
+                    // independent paths to containment and an operator needs to know that the
+                    // slower one is still fast enough.
+                    if (requestedTick is { } tick)
                     {
-                        current.Kill();
+                        SpikeLog.Write("measure.local_stop_ms", "STOP sentinel to supervisor containment", new
+                        {
+                            ms = Environment.TickCount64 - tick,
+                            actor = "supervisor",
+                        });
                     }
+
+                    _companion?.Kill();
                 }
             }
             else
             {
+                if (_contained)
+                {
+                    _contained = false;
+                    _relaunchTriggerTick = Environment.TickCount64;
+                    _relaunchReason = "containment-cleared";
+                    SpikeLog.Write("emergency.stop.cleared", "STOP sentinel gone; companion may start again");
+                }
                 announced = false;
             }
 
@@ -789,8 +838,19 @@ public sealed class SupervisorCore(SupervisorOptions options) : IAsyncDisposable
 
     // -------------------------------------------------------------- shutdown
 
+    private int _stopped;
+
+    /// <summary>
+    /// Idempotent: the service host calls it from <c>OnStop</c> and again from
+    /// <c>Dispose</c>, and the console host calls it explicitly before disposing.
+    /// </summary>
     public async Task StopAsync()
     {
+        if (Interlocked.Exchange(ref _stopped, 1) == 1)
+        {
+            return;
+        }
+
         SpikeLog.Write("supervisor.stop", "supervisor stopping");
         if (_cts is not null)
         {
@@ -821,6 +881,20 @@ public sealed class SupervisorCore(SupervisorOptions options) : IAsyncDisposable
         catch (Exception ex) when (ex is TimeoutException or OperationCanceledException)
         {
             SpikeLog.Write("supervisor.stop.timeout", "background loops did not drain in 5s");
+        }
+    }
+
+    private static long? ReadTick(string path)
+    {
+        try
+        {
+            using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using var reader = new StreamReader(stream);
+            return long.TryParse(reader.ReadToEnd().Trim(), out var tick) ? tick : null;
+        }
+        catch (IOException)
+        {
+            return null;
         }
     }
 

@@ -1,139 +1,143 @@
-using System.ComponentModel;
-using System.Diagnostics;
-using System.Security.Principal;
 using Otondev.Spike.Common;
+using Otondev.Spike.Probe;
 
-namespace Otondev.Spike.Probe;
+// Harness for the spike. Every mode is safe to run unelevated; several of them are *designed*
+// to be run unelevated, because "what does an ordinary local process get away with" is the
+// question criterion 5 asks.
+
+var mode = args.Length > 0 ? args[0] : "help";
+var rest = new ProbeArgs(args);
+
+SpikeLog.Open("probe", echo: false);
+SpikePaths.EnsureDirectories();
+
+using var cancellation = new CancellationTokenSource();
+Console.CancelKeyPress += (_, e) =>
+{
+    e.Cancel = true;
+    cancellation.Cancel();
+};
+
+switch (mode)
+{
+    case "preflight":
+        return Preflight.Run();
+
+    case "intruder":
+        return await SecurityTests.Intrude(cancellation.Token);
+
+    case "squatter":
+        return await SecurityTests.Squat(
+            TimeSpan.FromSeconds(rest.Double("--seconds") ?? 30), cancellation.Token);
+
+    case "stop":
+        return Stop();
+
+    case "resume":
+        return Resume();
+
+    case "report":
+        return Report.Render(rest.Value("--run"), rest.Value("--out"));
+
+    case "clean":
+        return Clean();
+
+    default:
+        Console.WriteLine("""
+            Otondev Windows session spike — probe
+
+              preflight              what this identity can and cannot do
+              intruder               unauthorized local caller vs the supervisor pipe
+              squatter [--seconds N] rogue pipe server vs the companion
+              stop                   drop the STOP sentinel (emergency containment)
+              resume                 clear the STOP sentinel
+              report [--run ID] [--out FILE]
+                                     render measured evidence as markdown
+              clean                  delete event logs and sentinels for a fresh run
+            """);
+        return 0;
+}
 
 /// <summary>
-/// Records what this machine actually is, and what an unprivileged process can and cannot do here.
-///
-/// Every other measurement in the spike is only interpretable against this. "The cross-session
-/// launch failed" means one thing on a box where the caller had SE_TCB_NAME and something
-/// completely different on a box where it did not, and six months later nobody will remember
-/// which this was.
+/// The sentinel carries the tick at which it was written so the companion can measure its own
+/// reaction latency against a clock both processes share. Writing the file is the whole
+/// mechanism: no network, no control plane, no IPC.
 /// </summary>
-public static class Program
+int Stop()
 {
-    private const string Component = "probe";
+    var sentinel = Path.Combine(SpikePaths.Root, "STOP");
+    var tick = Environment.TickCount64;
+    File.WriteAllText(sentinel, tick.ToString());
+    SpikeLog.Write("emergency.stop.requested", "STOP sentinel written", new { tick, path = sentinel });
+    Console.WriteLine($"STOP written to {sentinel} (tick {tick})");
+    return 0;
+}
 
-    public static int Main()
+int Resume()
+{
+    var sentinel = Path.Combine(SpikePaths.Root, "STOP");
+    if (File.Exists(sentinel))
     {
-        Environment();
-        Sessions();
-        PrivilegeBoundary();
-        ServiceState();
-        return 0;
+        File.Delete(sentinel);
+        SpikeLog.Write("emergency.stop.cleared", "STOP sentinel removed");
+        Console.WriteLine("STOP cleared");
     }
-
-    private static void Environment()
+    else
     {
-        using var identity = WindowsIdentity.GetCurrent();
-        var process = Process.GetCurrentProcess();
-
-        Evidence.Record(Component, "host", Outcome.Info,
-            $"os={System.Environment.OSVersion.VersionString} " +
-            $"machine={System.Environment.MachineName} " +
-            $"cpus={System.Environment.ProcessorCount} " +
-            $"clr={System.Environment.Version}");
-
-        Evidence.Record(Component, "caller", Outcome.Info,
-            $"user={identity.Name} sid={identity.User?.Value} session={process.SessionId} " +
-            $"integrity={Launch.CurrentIntegrityLevel()} " +
-            $"elevated={Native.IsCurrentProcessElevated()} " +
-            $"administrator={Native.IsCurrentProcessAdministrator()}");
+        Console.WriteLine("no STOP sentinel present");
     }
+    return 0;
+}
 
-    private static void Sessions()
-    {
-        var console = Native.ActiveConsoleSessionId();
-        foreach (var session in Native.EnumerateSessions())
-        {
-            Evidence.Record(Component, "session", Outcome.Info,
-                $"id={session.SessionId} station={session.WinStationName} state={session.State} " +
-                $"user={(string.IsNullOrEmpty(session.UserName) ? "-" : $"{session.DomainName}\\{session.UserName}")} " +
-                $"interactiveCandidate={session.IsInteractiveCandidate}" +
-                (session.SessionId == console ? " [active console]" : string.Empty));
-        }
-    }
-
-    /// <summary>
-    /// Probe the exact privilege the architecture depends on.
-    ///
-    /// ERROR_PRIVILEGE_NOT_HELD (1314) from an unelevated caller is the *expected* result and is
-    /// recorded as a pass, because it confirms the mechanism is present and gated exactly where
-    /// the design says it is. Getting a token here instead would be the alarming outcome: it
-    /// would mean any user process on this box could launch code into another user's session.
-    /// </summary>
-    private static void PrivilegeBoundary()
-    {
-        const int errorPrivilegeNotHeld = 1314;
-
-        var target = Native.EnumerateSessions().FirstOrDefault(s => s.IsInteractiveCandidate);
-        if (target is null)
-        {
-            Evidence.Record(Component, "wts-query-user-token", Outcome.Blocked, "no interactive session to probe");
-            return;
-        }
-
-        var (ok, error) = Native.TryQueryUserToken(target.SessionId, out _);
-        var elevated = Native.IsCurrentProcessElevated();
-
-        if (ok)
-        {
-            Evidence.Record(Component, "wts-query-user-token", elevated ? Outcome.Info : Outcome.Fail,
-                elevated
-                    ? $"token obtained for session {target.SessionId} (caller is elevated)"
-                    : $"an UNELEVATED process obtained a user token for session {target.SessionId} — " +
-                      "that is a serious local privilege boundary problem on this host");
-            return;
-        }
-
-        Evidence.Record(Component, "wts-query-user-token",
-            error == errorPrivilegeNotHeld ? Outcome.Pass : Outcome.Info,
-            error == errorPrivilegeNotHeld
-                ? $"refused with ERROR_PRIVILEGE_NOT_HELD (1314) for session {target.SessionId}: " +
-                  "SE_TCB_NAME is required, and only LocalSystem holds it. This is why the design needs a service."
-                : $"refused with win32={error} ({new Win32Exception(error).Message}) for session {target.SessionId}");
-
-        Evidence.Record(Component, "cross-session-launch-from-here",
-            Outcome.Blocked,
-            "CreateProcessAsUser into another session cannot be attempted without the token above; " +
-            "this measurement requires the service to be installed and running as LocalSystem",
-            criterion: "a session-0 service launches an interactive companion process in a real logged-in session");
-    }
-
-    private static void ServiceState()
+int Clean()
+{
+    var removed = 0;
+    foreach (var file in Directory.EnumerateFiles(SpikePaths.Root, "events.*.jsonl"))
     {
         try
         {
-            var psi = new ProcessStartInfo("sc.exe", $"query {Supervisor.ServiceName}")
-            {
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-            };
-            using var sc = Process.Start(psi)!;
-            var output = sc.StandardOutput.ReadToEnd();
-            sc.WaitForExit(5000);
-
-            var installed = sc.ExitCode == 0;
-            var running = output.Contains("RUNNING", StringComparison.Ordinal);
-
-            Evidence.Record(Component, "supervisor-service", installed ? Outcome.Info : Outcome.Blocked,
-                installed
-                    ? $"{Supervisor.ServiceName} is installed and {(running ? "RUNNING" : "not running")}"
-                    : $"{Supervisor.ServiceName} is not installed; the session-0 half of the spike has not been run " +
-                      "(installation requires administrator)");
+            File.Delete(file);
+            removed++;
         }
-        catch (Exception ex)
+        catch (IOException)
         {
-            Evidence.Record(Component, "supervisor-service", Outcome.Info, $"{ex.GetType().Name}: {ex.Message}");
+            Console.Error.WriteLine($"in use, kept: {file}");
         }
     }
 
-    private static class Supervisor
+    var sentinel = Path.Combine(SpikePaths.Root, "STOP");
+    if (File.Exists(sentinel))
     {
-        public const string ServiceName = "OtondevSpikeSupervisor";
+        File.Delete(sentinel);
     }
+
+    if (Directory.Exists(SpikePaths.WorkDir))
+    {
+        foreach (var file in Directory.EnumerateFiles(SpikePaths.WorkDir, "target-*.txt"))
+        {
+            try
+            {
+                File.Delete(file);
+            }
+            catch (IOException)
+            {
+                // Still open in the editor; harmless.
+            }
+        }
+    }
+
+    Console.WriteLine($"removed {removed} event log(s) from {SpikePaths.Root}");
+    return 0;
+}
+
+internal sealed class ProbeArgs(string[] args)
+{
+    public string? Value(string name)
+    {
+        var index = Array.IndexOf(args, name);
+        return index >= 0 && index + 1 < args.Length ? args[index + 1] : null;
+    }
+
+    public double? Double(string name) =>
+        double.TryParse(Value(name), out var value) ? value : null;
 }

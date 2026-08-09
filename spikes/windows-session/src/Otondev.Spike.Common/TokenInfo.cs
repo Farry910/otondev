@@ -66,7 +66,7 @@ public static class TokenInfo
 
     [DllImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
-    internal static extern bool CloseHandle(IntPtr handle);
+    public static extern bool CloseHandle(IntPtr handle);
 
     /// <summary>Raw <c>GetTokenInformation</c>, sized in two passes.</summary>
     private static IntPtr Query(IntPtr token, int infoClass, out int size)
