@@ -32,7 +32,7 @@ heartbeat: 2026-08-09 14:53
 - [x] a manifest version mismatch fails closed
 - [ ] the verifier cannot publish, approve, or review its own executor's narrative
 - [x] fake and implementation both pass the shared conformance suite
-- [ ] `pnpm test` green offline with all peers faked
+- [x] `pnpm test` green offline with all peers faked
 
 ## Log
 
