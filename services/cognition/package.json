@@ -1,0 +1,23 @@
+{
+  "name": "@otondev/cognition",
+  "version": "0.0.0",
+  "private": true,
+  "description": "S6 Cognition Gateway — the egress control point between agents and model providers.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@otondev/contracts": "workspace:*",
+    "@otondev/sdk": "workspace:*"
+  }
+}
