@@ -11,7 +11,7 @@ depends_on: W0
 gate: none
 gate_cleared: yes
 fake: no
-heartbeat: 2026-08-09 14:51
+heartbeat: 2026-08-09 14:52
 ```
 
 **Owns** — `services/workflow/**`, Postgres schema `workflow`
@@ -26,7 +26,7 @@ heartbeat: 2026-08-09 14:51
 
 - [x] the full state machine from contracts §3, with compare-and-set on `state_version`
 - [x] leases carrying owner, expiry, and **fencing token**; timers and wakeups; retry and backoff
-- [ ] a transition event persisted for every state change
+- [x] a transition event persisted for every state change
 - [ ] compensation hooks and the recovery scan for interrupted attempts
 - [ ] two claimants on one workflow: exactly one wins
 - [ ] an expired worker's write is fenced and rejected
