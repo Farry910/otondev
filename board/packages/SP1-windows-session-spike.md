@@ -2,10 +2,10 @@
 
 ```yaml
 id: SP1
-status: todo
-owner: ""
-claimed_at: ""
-heartbeat: ""
+status: claimed
+owner: agent-bbf05b75
+claimed_at: 2026-08-09 13:03
+heartbeat: 2026-08-09 13:03
 reviewer: ""
 branch: spike/SP1-windows-session
 stage: 0
@@ -51,3 +51,4 @@ A human reads `FINDINGS.md` and, if the verdict is continue, runs:
 ## Log
 
 <!-- newest last · `YYYY-MM-DD HH:MM | session | note` -->
+- 2026-08-09 13:03 | agent-bbf05b75 | claimed
