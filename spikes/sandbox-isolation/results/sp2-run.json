@@ -1,0 +1,285 @@
+{
+  "schema": "otondev.spike.sp2.v1",
+  "ranAt": "2026-08-09T19:50:54.123Z",
+  "host": {
+    "platform": "win32",
+    "release": "10.0.26200",
+    "arch": "x64",
+    "cpus": 16
+  },
+  "passed": 20,
+  "failed": 0,
+  "blocked": 0,
+  "info": 5,
+  "checks": [
+    {
+      "step": 1,
+      "name": "host-standins",
+      "status": "info",
+      "detail": "vault stand-in on :8200, LAN service on :8899"
+    },
+    {
+      "step": 2,
+      "name": "docker-available",
+      "status": "info",
+      "detail": "server 29.6.1 (linux/amd64) on win32 10.0.26200"
+    },
+    {
+      "step": 3,
+      "name": "host-profile",
+      "status": "info",
+      "detail": "overlayfs|2|[name=seccomp,profile=builtin name=cgroupns]"
+    },
+    {
+      "step": 4,
+      "name": "build:otondev-spike/worker:sp2",
+      "status": "pass",
+      "detail": "sha256:9668b89049a8eb55b665211e6c9c154d6e963058ab7596ea5ee8ccb019cb8873",
+      "ms": 741
+    },
+    {
+      "step": 5,
+      "name": "build:otondev-spike/proxy:sp2",
+      "status": "pass",
+      "detail": "sha256:3e82c228def8383226e88ad96c859cc2a9637cf034600dda46af5eb5d77cd471",
+      "ms": 684
+    },
+    {
+      "step": 6,
+      "name": "escape-suite-control",
+      "status": "pass",
+      "detail": "with isolation removed the same probes reach: vault, lan-host-service, public-internet, dns-resolution — so the isolated run's silence is enforcement, not a broken probe",
+      "ms": 172,
+      "reached": [
+        "vault",
+        "lan-host-service",
+        "public-internet",
+        "dns-resolution"
+      ]
+    },
+    {
+      "step": 7,
+      "name": "escape-suite-isolated",
+      "status": "pass",
+      "detail": "all 7 probes contained: host-socket, vault, cloud-metadata, lan-host-service, default-gateway, public-internet, dns-resolution",
+      "ms": 157,
+      "probes": [
+        {
+          "name": "host-socket",
+          "target": "/var/run/docker.sock",
+          "reached": false,
+          "detail": "/var/run/docker.sock is not present in the mount namespace"
+        },
+        {
+          "name": "vault",
+          "target": "host.docker.internal:8200",
+          "reached": false,
+          "detail": "EAI_AGAIN: getaddrinfo EAI_AGAIN host.docker.internal",
+          "ms": 6
+        },
+        {
+          "name": "cloud-metadata",
+          "target": "169.254.169.254:80",
+          "reached": false,
+          "detail": "ENETUNREACH: connect ENETUNREACH 169.254.169.254:80 - Local (0.0.0.0:0)",
+          "ms": 1
+        },
+        {
+          "name": "lan-host-service",
+          "target": "host.docker.internal:8899",
+          "reached": false,
+          "detail": "EAI_AGAIN: getaddrinfo EAI_AGAIN host.docker.internal",
+          "ms": 1
+        },
+        {
+          "name": "default-gateway",
+          "target": "default route",
+          "reached": false,
+          "detail": "no default route in this namespace"
+        },
+        {
+          "name": "public-internet",
+          "target": "1.1.1.1:443",
+          "reached": false,
+          "detail": "ENETUNREACH: connect ENETUNREACH 1.1.1.1:443 - Local (0.0.0.0:0)",
+          "ms": 1
+        },
+        {
+          "name": "dns-resolution",
+          "target": "registry.npmjs.org",
+          "reached": false,
+          "detail": "ECONNREFUSED: queryA ECONNREFUSED registry.npmjs.org",
+          "ms": 0
+        }
+      ]
+    },
+    {
+      "step": 8,
+      "name": "workspace-peer-control",
+      "status": "pass",
+      "detail": "on a shared network the peer IS reachable (connected to 172.18.0.2:9000) — so the probe works and per-workspace networks are what stop it",
+      "ms": 163
+    },
+    {
+      "step": 9,
+      "name": "workspace-peer-isolation",
+      "status": "pass",
+      "detail": "a workspace on its own network cannot reach another workspace at 172.20.0.2:9000 (ENETUNREACH: connect ENETUNREACH 172.20.0.2:9000 - Local (0.0.0.0:0))",
+      "ms": 164
+    },
+    {
+      "step": 10,
+      "name": "egress-direct-still-denied",
+      "status": "pass",
+      "detail": "with a proxy configured, direct connections out of the workspace still reach nothing",
+      "ms": 148
+    },
+    {
+      "step": 11,
+      "name": "egress-allowlisted-host-permitted",
+      "status": "pass",
+      "detail": "registry.npmjs.org through the proxy: status 200",
+      "ms": 155
+    },
+    {
+      "step": 12,
+      "name": "egress-non-allowlisted-host-refused",
+      "status": "pass",
+      "detail": "example.com through the proxy: status 403 (expected 403)",
+      "ms": 141
+    },
+    {
+      "step": 13,
+      "name": "egress-logged-both-decisions",
+      "status": "pass",
+      "detail": "egress log records the permitted request as well as the refused one (3 entries)",
+      "egressLog": [
+        {
+          "at": "2026-08-09T19:50:16.018Z",
+          "event": "proxy-start",
+          "port": 3128,
+          "allow": [
+            "registry.npmjs.org"
+          ]
+        },
+        {
+          "at": "2026-08-09T19:50:18.100Z",
+          "event": "connect",
+          "host": "registry.npmjs.org",
+          "port": 443,
+          "decision": "allow"
+        },
+        {
+          "at": "2026-08-09T19:50:18.257Z",
+          "event": "connect",
+          "host": "example.com",
+          "port": 443,
+          "decision": "deny"
+        }
+      ]
+    },
+    {
+      "step": 14,
+      "name": "quota-memory-terminates",
+      "status": "pass",
+      "detail": "exceeding the memory limit killed the workspace (exit 137 = SIGKILL by the OOM killer)",
+      "ms": 334,
+      "exitCode": 137
+    },
+    {
+      "step": 15,
+      "name": "quota-pids-terminates",
+      "status": "pass",
+      "detail": "300 forks against a limit of 32 terminated the workload (exited|2), while the same fork bomb with no limit was still running (running|0) — the limit is what killed it, and it killed rather than throttled",
+      "ms": 7044,
+      "limitedState": "exited|2",
+      "controlState": "running|0",
+      "limit": 32
+    },
+    {
+      "step": 16,
+      "name": "quota-cpu-degrades-not-terminates",
+      "status": "info",
+      "detail": "a busy loop ran 4004 ms wall and consumed 2004 ms CPU (~0.50 cores against a 0.5 limit). CPU quota THROTTLES; it never terminates. A cpu-seconds budget therefore has to be enforced by the supervisor as a watchdog that kills, not by the container runtime. This is a real gap against the S10 criterion as written.",
+      "ms": 4321
+    },
+    {
+      "step": 17,
+      "name": "quota-cpu-seconds-watchdog-terminates",
+      "status": "pass",
+      "detail": "a supervisor watchdog sampling the workspace's own cgroup accounting killed it at 2.28 CPU-seconds against a 2s budget (overshoot 0.28s over 6 samples at 250 ms). Final state exited|137. This is what makes budget.cpu_seconds enforceable; the runtime alone cannot do it.",
+      "ms": 2780,
+      "budgetSeconds": 2,
+      "killedAtSeconds": 2.282494,
+      "samples": 6
+    },
+    {
+      "step": 18,
+      "name": "quota-walltime-terminates",
+      "status": "pass",
+      "detail": "supervisor-enforced wall clock: container killed after 2523 ms, final state exited|137",
+      "ms": 2523
+    },
+    {
+      "step": 19,
+      "name": "quota-disk-enforced",
+      "status": "pass",
+      "detail": "--storage-opt size is supported on this storage driver",
+      "ms": 328
+    },
+    {
+      "step": 20,
+      "name": "workspace-cannot-kill-its-own-init",
+      "status": "pass",
+      "detail": "in-namespace `kill -9 1` (returned=0) left the container running: a workload cannot terminate its own workspace, so containment is always the supervisor's to enforce"
+    },
+    {
+      "step": 21,
+      "name": "crash-teardown-leaves-nothing",
+      "status": "pass",
+      "detail": "after an abrupt SIGKILL the container state was exited|137|false; teardown removed the container (83 ms), its tmpfs mounts went with it, and the network was removed. Dangling volumes on the host: 0.",
+      "ms": 83
+    },
+    {
+      "step": 22,
+      "name": "workspace-timings",
+      "status": "info",
+      "detail": "cold create 465 ms · warm create 515 ms (453/540/552) · teardown 202 ms. Fresh-workspace-per-attempt costs about 717 ms, which is comfortably below the cost of any task worth sandboxing.",
+      "samples": {
+        "cold": 465,
+        "warm": [
+          453,
+          540,
+          552
+        ],
+        "teardown": [
+          152,
+          173,
+          185,
+          297
+        ]
+      }
+    },
+    {
+      "step": 23,
+      "name": "real-test-suite-materialise",
+      "status": "pass",
+      "detail": "cloned and checked out 384ba0660a59 inside the workspace",
+      "ms": 307
+    },
+    {
+      "step": 24,
+      "name": "real-test-suite-install",
+      "status": "pass",
+      "detail": "pnpm install through the allow-list proxy: exit 0\nss: resolved 228, reused 0, downloaded 226, added 226\nProgress: resolved 228, reused 0, downloaded 228, added 228, done\n.../node_modules/protobufjs postinstall$ node scripts/postinstall\n.../esbuild@0.28.2/node_modules/esbuild postinstall$ node install.js\n.../node_modules/protobufjs postinstall: Done\n.../esbuild@0.28.2/node_modules/esbuild postinstall: Done\n\ndevDependencies:\n+ @eslint/js 9.39.5\n+ @otondev/sdk 0.0.0 <- packages/sdk\n+ @otondev/testkit 0.0.0 <- packages/testkit\n+ @types/node 22.19.5\n+ @vitest/coverage-v8 4.1.10\n+ dependency-cruiser 18.1.1\n+ eslint 9.39.5\n+ globals 16.5.0\n+ tsx 4.23.11\n+ typescript 5.9.3\n+ typescript-eslint 8.66.0\n+ vitest 4.1.10\n\nDone in 4.8s using pnpm v10.15.0",
+      "ms": 6194
+    },
+    {
+      "step": 25,
+      "name": "real-test-suite",
+      "status": "pass",
+      "detail": "pnpm test inside the sandbox: exit 0\n8 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 70\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m packages/sdk/src/sdk.test.ts \u001b[2m(\u001b[22m\u001b[2m25 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 51\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m packages/sdk/src/conformance/parity.test.ts \u001b[2m(\u001b[22m\u001b[2m31 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 23\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m scripts/__tests__/ownership.test.mjs \u001b[2m(\u001b[22m\u001b[2m17 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 13\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m packages/example-consumer/src/example-consumer.test.ts \u001b[2m(\u001b[22m\u001b[2m10 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 11\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m scripts/__tests__/boundaries.test.mjs \u001b[2m(\u001b[22m\u001b[2m5 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 157\u001b[2mms\u001b[22m\u001b[39m\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[32m7 passed\u001b[39m\u001b[22m\u001b[90m (7)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[32m179 passed\u001b[39m\u001b[22m\u001b[90m (179)\u001b[39m\n\u001b[2m   Start at \u001b[22m 19:50:52\n\u001b[2m   Duration \u001b[22m 1.15s\u001b[2m (transform 579ms, setup 131ms, import 1.43s, tests 369ms, environment 0ms)\u001b[22m",
+      "ms": 1651
+    }
+  ]
+}

@@ -43,9 +43,15 @@ export default tseslint.config(
     },
   },
   {
-    // CLIs, bootstrap and test code legitimately talk to the process and the console.
+    // CLIs, bootstrap, spikes and test code legitimately talk to the process and the console.
+    //
+    // `spikes/**` is exempted from these two rules rather than ignored outright: a spike is
+    // throwaway by design, but its *measurements* have to be trustworthy, so the rules that
+    // catch real defects — unused bindings, shadowing, `any` — still apply. Added by SP2
+    // against a W0-owned file; see the contract request.
     files: [
       'scripts/**',
+      'spikes/**',
       '**/bin/**',
       '**/cli.ts',
       '**/*.test.ts',

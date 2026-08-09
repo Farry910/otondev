@@ -56,6 +56,17 @@ export const OWNERSHIP = [
     sharedWith: ['*'],
   },
 
+  // ---- Stage-0 spikes ------------------------------------------------------
+  // Added by SP2. The map has to be *total* — the audit fails on any tracked file no card
+  // claims — and it was written during W0, before the spike cards existed. The first spike
+  // to land a directory would otherwise have turned `main` red for every other session.
+  // Recorded as a contract request against the W0/S20-owned file rather than done silently.
+  { id: 'SP1', title: 'Windows session spike', owns: ['spikes/windows-session/**'] },
+  { id: 'SP2', title: 'Sandbox isolation spike', owns: ['spikes/sandbox-isolation/**'] },
+  { id: 'SP3', title: 'Ditto behaviour spike', owns: ['spikes/ditto-behaviour/**'] },
+  { id: 'SP4', title: 'Connector semantics spike', owns: ['spikes/connector-semantics/**'] },
+  { id: 'SP5', title: 'Presence platform and voice path spike', owns: ['spikes/presence-platform/**'] },
+
   // ---- control plane -------------------------------------------------------
   { id: 'S1', title: 'Event Ingress and Dedupe', owns: ['services/ingress/**'] },
   { id: 'S2', title: 'Workflow Engine', owns: ['services/workflow/**'] },
