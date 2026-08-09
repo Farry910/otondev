@@ -29,7 +29,7 @@ heartbeat: 2026-08-09 14:52
 - [x] a transition event persisted for every state change
 - [x] compensation hooks and the recovery scan for interrupted attempts
 - [x] two claimants on one workflow: exactly one wins
-- [ ] an expired worker's write is fenced and rejected
+- [x] an expired worker's write is fenced and rejected
 - [ ] crash mid-transition resumes at a safe state
 - [ ] terminal states reject all further transitions
 - [ ] pause and cancel complete **only after** capabilities are denied and the lease is fenced
