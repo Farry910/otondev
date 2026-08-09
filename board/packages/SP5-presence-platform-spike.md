@@ -5,7 +5,7 @@ id: SP5
 status: claimed
 owner: agent-sess-a860aca9
 claimed_at: 2026-08-09 14:32
-heartbeat: 2026-08-09 14:42
+heartbeat: 2026-08-09 14:44
 reviewer: ""
 branch: spike/SP5-presence-platform
 stage: 0
@@ -29,7 +29,7 @@ owns: spikes/presence-platform/**
 ## Exit criteria
 
 - [x] for each candidate platform: whether a bot can join, be disclosed as an AI, receive audio, and speak — with the API evidence
-- [ ] per platform, the consent and recording-disclosure obligations the platform itself imposes
+- [x] per platform, the consent and recording-disclosure obligations the platform itself imposes
 - [ ] a candidate voice path measured for round-trip latency, barge-in / interruption handling, and behaviour on reconnect
 - [x] the data path is documented: what audio or transcript leaves the boundary, to which provider, in which region
 - [ ] cost per meeting-hour estimated for each candidate, with the assumptions stated
