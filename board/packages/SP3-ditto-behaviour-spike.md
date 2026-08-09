@@ -2,10 +2,10 @@
 
 ```yaml
 id: SP3
-status: todo
-owner: ""
-claimed_at: ""
-heartbeat: ""
+status: claimed
+owner: agent-bbf05b75
+claimed_at: 2026-08-09 14:00
+heartbeat: 2026-08-09 14:00
 reviewer: ""
 branch: spike/SP3-ditto-behaviour
 stage: 0
@@ -46,3 +46,4 @@ owns: spikes/ditto-behaviour/**
 ## Log
 
 <!-- newest last · `YYYY-MM-DD HH:MM | session | note` -->
+- 2026-08-09 14:00 | agent-bbf05b75 | claimed
