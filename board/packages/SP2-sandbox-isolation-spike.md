@@ -35,7 +35,7 @@ owns: spikes/sandbox-isolation/**
 - [x] teardown completes after a deliberate worker crash, leaving nothing mounted or running
 - [x] measured: cold workspace create, warm create, and teardown times
 - [x] `spikes/sandbox-isolation/FINDINGS.md` records a **kill-or-continue verdict**, the host profile it holds for, and the residual risks
-- [ ] the finding states which S10 exit criteria are now known reachable and which remain unproven
+- [x] the finding states which S10 exit criteria are now known reachable and which remain unproven
 
 ## Handing the result back
 
