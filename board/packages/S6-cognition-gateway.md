@@ -29,7 +29,7 @@ heartbeat: 2026-08-09 18:25
 - [x] privacy-aware audit record (no default full prompt/response retention)
 - [x] a forbidden provider fails closed and never silently falls back to a weaker data policy
 - [x] schema validation failure returns a typed error rather than prose
-- [ ] a fallback meets the same required capability and minimum eval floor
+- [x] a fallback meets the same required capability and minimum eval floor
 - [ ] budget exhaustion pauses rather than overruns; a model cannot approve its own increase
 - [ ] the S19 injection corpus runs green at the agreed threshold
 - [ ] the response contains **no authorization field of any kind**
