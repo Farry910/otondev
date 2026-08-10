@@ -11,7 +11,7 @@ depends_on: W0
 gate: none
 gate_cleared: yes
 fake: no
-heartbeat: 2026-08-09 18:10
+heartbeat: 2026-08-09 18:26
 ```
 
 **Owns** — `services/policy/**`, Postgres schema `policy`
@@ -24,7 +24,7 @@ heartbeat: 2026-08-09 18:10
 
 ## Exit criteria
 
-- [ ] deterministic evaluation over actor, action, resource, environment, data class, provenance, incident mode, cost, approval
+- [x] deterministic evaluation over actor, action, resource, environment, data class, provenance, incident mode, cost, approval
 - [ ] effective autonomy is the **minimum** across agent, repo, environment, data class, incident mode, and action type
 - [ ] signed, versioned policy bundles; decisions reproducible from logged inputs plus bundle hash
 - [ ] approval records bound to actor, action, normalized parameter digest, resource, environment, expiry, `max_uses`
