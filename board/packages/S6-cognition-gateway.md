@@ -33,7 +33,7 @@ heartbeat: 2026-08-09 18:25
 - [x] budget exhaustion pauses rather than overruns; a model cannot approve its own increase
 - [ ] the S19 injection corpus runs green at the agreed threshold
 - [x] the response contains **no authorization field of any kind**
-- [ ] fake and implementation both pass the shared conformance suite
+- [x] fake and implementation both pass the shared conformance suite
 - [ ] `pnpm test` green offline with all peers faked
 
 ## Log
