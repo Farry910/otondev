@@ -1,4 +1,5 @@
 import type { WorkflowRecord, WorkflowTransition } from '@otondev/contracts';
+import { SQL } from './sql-statements.js';
 import type { CommitOutcome, LeaseMutator, Mutator, WorkflowStore } from './store.js';
 
 /**
@@ -18,9 +19,16 @@ import type { CommitOutcome, LeaseMutator, Mutator, WorkflowStore } from './stor
  *     in one transaction. Those are checkable against a recording executor; they are the two
  *     properties that make the store correct, and they are exactly what a driver would hide.
  *
- * NOT YET EXERCISED AGAINST A LIVE POSTGRES. See README — this is a reviewed reference
- * implementation, not a verified one, and the S20 owner wiring the first real driver should
- * treat the integration as unproven.
+ * The statements themselves live in `sql-statements.ts` and are verified against a real
+ * postgres:16.4 by `scripts/verify-postgres.ts` — every one of them is PREPAREd against the
+ * live schema, and the compare-and-set, fencing sequence and scan predicates are exercised
+ * for behaviour. That check earned its place immediately: the first migration used generated
+ * columns casting `text::timestamptz`, which is STABLE rather than IMMUTABLE, so PostgreSQL
+ * refused the DDL outright. No mocked executor could have found it.
+ *
+ * Still unproven: this class. The `SqlExecutor` adapter over a real driver does not exist,
+ * because no driver is in the frozen root lockfile. The SQL is verified; the plumbing between
+ * this class and a connection pool is not.
  */
 
 export interface SqlExecutor {
@@ -49,18 +57,13 @@ export class SqlWorkflowStore implements WorkflowStore {
   }
 
   async insert(record: WorkflowRecord): Promise<void> {
-    await this.#sql.query(
-      `INSERT INTO workflow.records (id, tenant_id, record) VALUES ($1, $2, $3::jsonb)`,
-      [record.id, record.tenant_id, JSON.stringify(record)],
-    );
+    await this.#sql.query(SQL.insert, [record.id, record.tenant_id, JSON.stringify(record)]);
   }
 
   async get(workflowId: string): Promise<WorkflowRecord | null> {
-    const rows = await this.#sql.query<RecordRow>(
-      `SELECT record, fencing_token_seq FROM workflow.records WHERE id = $1`,
-      [workflowId],
-    );
-    return rows.length === 0 ? null : parseRecord(rows[0]);
+    const rows = await this.#sql.query<RecordRow>(SQL.selectRecord, [workflowId]);
+    const row = rows[0];
+    return row === undefined ? null : parseRecord(row);
   }
 
   /**
@@ -77,26 +80,22 @@ export class SqlWorkflowStore implements WorkflowStore {
     mutate: Mutator,
   ): Promise<CommitOutcome> {
     return this.#sql.transaction(async (tx) => {
-      const rows = await tx.query<RecordRow>(
-        `SELECT record, fencing_token_seq FROM workflow.records WHERE id = $1 FOR UPDATE`,
-        [workflowId],
-      );
-      if (rows.length === 0) return { status: 'not_found' };
+      const rows = await tx.query<RecordRow>(SQL.selectForUpdate, [workflowId]);
+      const row = rows[0];
+      if (row === undefined) return { status: 'not_found' };
 
-      const current = parseRecord(rows[0]);
+      const current = parseRecord(row);
       if (current.state_version !== expectedStateVersion) {
         return { status: 'version_conflict', actual_state_version: current.state_version };
       }
 
       const { record, transition } = mutate(current);
 
-      const updated = await tx.query(
-        `UPDATE workflow.records
-            SET record = $3::jsonb, updated_at = now()
-          WHERE id = $1 AND (record ->> 'state_version')::bigint = $2
-          RETURNING id`,
-        [workflowId, expectedStateVersion, JSON.stringify(record)],
-      );
+      const updated = await tx.query(SQL.updateGuarded, [
+        workflowId,
+        expectedStateVersion,
+        JSON.stringify(record),
+      ]);
       if (updated.length === 0) {
         return { status: 'version_conflict', actual_state_version: current.state_version };
       }
@@ -108,14 +107,12 @@ export class SqlWorkflowStore implements WorkflowStore {
 
   async mutate(workflowId: string, mutate: LeaseMutator): Promise<WorkflowRecord | null> {
     return this.#sql.transaction(async (tx) => {
-      const rows = await tx.query<RecordRow>(
-        `SELECT record, fencing_token_seq FROM workflow.records WHERE id = $1 FOR UPDATE`,
-        [workflowId],
-      );
-      if (rows.length === 0) return null;
+      const rows = await tx.query<RecordRow>(SQL.selectForUpdate, [workflowId]);
+      const row = rows[0];
+      if (row === undefined) return null;
 
-      const current = parseRecord(rows[0]);
-      const seq = Number(rows[0].fencing_token_seq);
+      const current = parseRecord(row);
+      const seq = Number(row.fencing_token_seq);
       let issued: number | null = null;
 
       const next = mutate(current, () => {
@@ -123,14 +120,7 @@ export class SqlWorkflowStore implements WorkflowStore {
         return issued;
       });
 
-      await tx.query(
-        `UPDATE workflow.records
-            SET record = $2::jsonb,
-                fencing_token_seq = GREATEST(fencing_token_seq, $3),
-                updated_at = now()
-          WHERE id = $1`,
-        [workflowId, JSON.stringify(next), issued ?? seq],
-      );
+      await tx.query(SQL.updateLease, [workflowId, JSON.stringify(next), issued ?? seq]);
       return next;
     });
   }
@@ -141,7 +131,7 @@ export class SqlWorkflowStore implements WorkflowStore {
 
   async transitions(workflowId: string): Promise<WorkflowTransition[]> {
     const rows = await this.#sql.query<{ transition: WorkflowTransition | string }>(
-      `SELECT transition FROM workflow.transitions WHERE workflow_id = $1 ORDER BY occurred_at, id`,
+      SQL.selectTransitions,
       [workflowId],
     );
     return rows.map((row) =>
@@ -153,21 +143,18 @@ export class SqlWorkflowStore implements WorkflowStore {
 
   async due(nowMs: number): Promise<string[]> {
     const now = new Date(nowMs).toISOString();
-    const rows = await this.#sql.query<{ id: string }>(
-      `SELECT id FROM workflow.records
-        WHERE state NOT IN ('DONE', 'REJECTED', 'DENIED', 'CANCELLED', 'FAILED')
-          AND (lease_expires_at <= $1::timestamptz OR next_wakeup_at <= $1::timestamptz)
-        ORDER BY id`,
-      [now],
-    );
+    const rows = await this.#sql.query<{ id: string }>(SQL.selectDue, [now]);
+    return rows.map((row) => row.id);
+  }
+
+  async active(): Promise<string[]> {
+    const rows = await this.#sql.query<{ id: string }>(SQL.selectActive, []);
     return rows.map((row) => row.id);
   }
 
   async #insertTransition(sql: SqlExecutor, transition: WorkflowTransition): Promise<void> {
     await sql.query(
-      `INSERT INTO workflow.transitions
-         (id, workflow_id, state_version, accepted, occurred_at, transition)
-       VALUES ($1, $2, $3, $4, $5::timestamptz, $6::jsonb)`,
+      SQL.insertTransition,
       [
         transition.id,
         transition.workflow_id,

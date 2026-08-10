@@ -81,6 +81,14 @@ export class MemoryWorkflowStore implements WorkflowStore {
     return due.sort();
   }
 
+  async active(): Promise<string[]> {
+    const ids: string[] = [];
+    for (const record of this.#records.values()) {
+      if (!isTerminal(record.state)) ids.push(record.id);
+    }
+    return ids.sort();
+  }
+
   #append(transition: WorkflowTransition): void {
     const log = this.#transitions.get(transition.workflow_id);
     if (log === undefined) this.#transitions.set(transition.workflow_id, [transition]);

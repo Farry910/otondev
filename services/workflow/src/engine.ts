@@ -422,10 +422,13 @@ export class WorkflowEngine implements WorkflowEngineClient {
   async quarantine(request: QuarantineRequest): Promise<ControlAck> {
     this.#control.recordQuarantine(request.scope.id ?? this.serviceId);
 
+    // `active`, not `due`: an idle workflow — no lease, no wakeup — is invisible to the
+    // recovery scan and is exactly as live as a busy one. Containing only the due ones
+    // produced an ack that said `contained: []` and looked like success.
     const targets =
       request.scope.kind === 'workflow' && request.scope.id !== undefined
         ? [request.scope.id]
-        : await this.#store.due(Number.MAX_SAFE_INTEGER);
+        : await this.#store.active();
 
     const contained: string[] = [];
     const outstanding: ControlAck['outstanding'] = [];

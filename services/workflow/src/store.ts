@@ -84,4 +84,15 @@ export interface WorkflowStore {
    * Ordered by id so a scan is reproducible.
    */
   due(nowMs: number): Promise<string[]>;
+
+  /**
+   * Every non-terminal workflow, due or not.
+   *
+   * Distinct from {@link WorkflowStore.due} on purpose, and the distinction is load-bearing:
+   * a workflow that has never taken a lease and has no wakeup scheduled is invisible to
+   * `due`, but it is still live and an emergency quarantine still has to contain it. Reusing
+   * `due` here — which this store did, briefly — makes a global quarantine report
+   * `contained: []` for exactly the workflows nobody has touched yet.
+   */
+  active(): Promise<string[]>;
 }

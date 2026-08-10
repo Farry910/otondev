@@ -114,7 +114,7 @@ describe('a transition event is persisted for every state change', () => {
     const log = await store.transitions(workflow.id);
     const refusals = log.filter((t) => !t.accepted);
     expect(refusals).toHaveLength(1);
-    expect(refusals[0].reason_codes).toContain('state_version conflict');
+    expect(refusals[0]?.reason_codes).toContain('state_version conflict');
   });
 
   it('records a fenced write as a refusal, not only a thrown error', async () => {
@@ -150,7 +150,7 @@ describe('a transition event is persisted for every state change', () => {
     expect(refusals.map((t) => t.reason_codes.at(-1))).toEqual(['LEASE_FENCED']);
     // The token the zombie presented is on the record, which is what makes the log usable
     // for working out which worker it was.
-    expect(refusals[0].fencing_token).toBe(stale.fencing_token);
+    expect(refusals[0]?.fencing_token).toBe(stale.fencing_token);
   });
 });
 
@@ -333,6 +333,7 @@ describe('a crash mid-transition resumes at a safe state', () => {
       appendRefusal: (t) => inner.appendRefusal(t),
       transitions: (id) => inner.transitions(id),
       due: (now) => inner.due(now),
+      active: () => inner.active(),
       commit: async (id, expected, mutate) => {
         if (crash) throw new Error('process died mid-commit');
         return inner.commit(id, expected, mutate);
@@ -478,6 +479,44 @@ describe('terminal states and the emergency hooks', () => {
       reason_codes: ['INCIDENT'],
     });
     expect(paused.state).toBe('PAUSED');
+  });
+
+  it('a global quarantine contains every live workflow, including idle ones', async () => {
+    // The one an incident actually uses. A workflow that has never taken a lease and has no
+    // wakeup scheduled is still live and still needs containing, and an ack that reports
+    // `contained: []` for it reads as "nothing to do" — the most dangerous possible answer
+    // during an emergency stop.
+    const { engine, seed } = harness();
+    const idle = await seed();
+    const leased = await seed();
+    await engine.acquireLease({
+      workflow_id: leased.id,
+      owner: `wl_${'0'.repeat(26)}`,
+      ttl_seconds: 60,
+    });
+    const finished = await seed();
+    await engine.transition({
+      workflow_id: finished.id,
+      expected_state_version: 0,
+      to: 'REJECTED',
+      channel: 'normal',
+      reason_codes: ['OUT_OF_SCOPE'],
+    });
+
+    const ack = await engine.quarantine({
+      incident_id: 'cor_global',
+      scope: { kind: 'global' },
+      reason: 'suspected compromise',
+      requested_by: 'operator',
+      requested_at: '2026-01-01T00:00:00Z',
+    });
+
+    expect(ack.contained.sort()).toEqual([idle.id, leased.id].sort());
+    expect((await engine.get(idle.id))?.state).toBe('PAUSED');
+    expect((await engine.get(leased.id))?.state).toBe('PAUSED');
+    // Already terminal: nothing to contain, and listing it would overstate the blast radius.
+    expect(ack.contained).not.toContain(finished.id);
+    expect((await engine.get(finished.id))?.state).toBe('REJECTED');
   });
 
   it('quarantine pauses the named workflow and reports what it contained', async () => {

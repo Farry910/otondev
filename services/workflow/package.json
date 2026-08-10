@@ -13,7 +13,9 @@
     }
   },
   "scripts": {
-    "build": "tsc -b"
+    "build": "tsc -b",
+    "typecheck:tests": "tsc -p tsconfig.test.json",
+    "verify:postgres": "tsx bin/verify-postgres.ts"
   },
   "dependencies": {
     "@otondev/contracts": "workspace:*",

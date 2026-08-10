@@ -1,6 +1,8 @@
 -- S2 owns the `workflow` schema. The schema and its role are created by
 -- infra/dev/postgres/01-service-schemas.sql; this migration creates the tables inside it and
 -- is run as the `otondev_workflow` role, whose search_path is already `workflow`.
+--
+-- Verified against postgres:16.4-alpine by services/workflow/scripts/verify-postgres.ts.
 
 \set ON_ERROR_STOP on
 
@@ -12,13 +14,19 @@ CREATE TABLE IF NOT EXISTS workflow.records (
     -- a column-per-field table makes that a migration every time a field is added.
     record                 jsonb NOT NULL,
 
-    -- Projected out of the record because every one of them is either a predicate in the
-    -- recovery scan or the target of the compare-and-set. A generated column keeps them
-    -- honest: they cannot drift from the record they were projected from.
-    state                  text  GENERATED ALWAYS AS (record ->> 'state') STORED,
+    -- Projected out of the record because each is either a predicate in a scan or the target
+    -- of the compare-and-set. Generated, so they cannot drift from the record: the
+    -- application has no way to set them.
+    state                  text   GENERATED ALWAYS AS (record ->> 'state') STORED,
     state_version          bigint GENERATED ALWAYS AS ((record ->> 'state_version')::bigint) STORED,
-    lease_expires_at       timestamptz GENERATED ALWAYS AS ((record #>> '{lease,expires_at}')::timestamptz) STORED,
-    next_wakeup_at         timestamptz GENERATED ALWAYS AS ((record ->> 'next_wakeup_at')::timestamptz) STORED,
+
+    -- The two timestamps are maintained by the trigger below rather than generated, and the
+    -- reason is not stylistic: `text::timestamptz` is STABLE, not IMMUTABLE — it depends on
+    -- the session TimeZone — and PostgreSQL rejects a non-immutable generation expression
+    -- outright ("generation expression is not immutable"). A trigger may call stable
+    -- functions, so it gets the same no-drift property by a route the server allows.
+    lease_expires_at       timestamptz,
+    next_wakeup_at         timestamptz,
 
     -- Monotonic per workflow, and deliberately NOT derived from the record: a released lease
     -- sets `record.lease` to null, and a counter that lived there would restart at 1 and let
@@ -28,6 +36,24 @@ CREATE TABLE IF NOT EXISTS workflow.records (
     created_at             timestamptz NOT NULL DEFAULT now(),
     updated_at             timestamptz NOT NULL DEFAULT now()
 );
+
+CREATE OR REPLACE FUNCTION workflow.project_record_timestamps()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    -- Read from the record and nowhere else. Any value the caller put in these columns is
+    -- discarded, which is what keeps them honest.
+    NEW.lease_expires_at := (NEW.record #>> '{lease,expires_at}')::timestamptz;
+    NEW.next_wakeup_at   := (NEW.record ->> 'next_wakeup_at')::timestamptz;
+    RETURN NEW;
+END
+$$;
+
+DROP TRIGGER IF EXISTS project_record_timestamps ON workflow.records;
+CREATE TRIGGER project_record_timestamps
+    BEFORE INSERT OR UPDATE OF record ON workflow.records
+    FOR EACH ROW EXECUTE FUNCTION workflow.project_record_timestamps();
 
 -- The recovery scan's only query. Partial, because terminal workflows are the majority in a
 -- mature deployment and none of them are ever due.
@@ -53,8 +79,9 @@ CREATE TABLE IF NOT EXISTS workflow.transitions (
 CREATE INDEX IF NOT EXISTS transitions_workflow_idx
     ON workflow.transitions (workflow_id, occurred_at);
 
--- No UPDATE or DELETE grant on the transition log, for the same reason the audit chain is
--- append-only: a state history that can be edited is not evidence.
+-- A state history that can be edited is not evidence. The schema owner necessarily retains
+-- rights (it just created the table); this revokes the application-facing grants, and the
+-- deployment grants SELECT/INSERT only to the runtime role.
 REVOKE UPDATE, DELETE ON workflow.transitions FROM PUBLIC;
 
 COMMENT ON TABLE workflow.records IS

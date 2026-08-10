@@ -100,8 +100,13 @@ describe('negative controls — the parity driver catches a broken engine', () =
 
   it('catches an engine that ignores the fencing token', async () => {
     const report = await parityAgainst((engine) => ({
-      transition: (input: Parameters<WorkflowEngine['transition']>[0]) =>
-        engine.transition({ ...input, fencing_token: undefined, channel: 'recovery' }),
+      transition: (input: Parameters<WorkflowEngine['transition']>[0]) => {
+        // Drop the property rather than setting it to undefined: `exactOptionalPropertyTypes`
+        // treats those as different, and the bug being simulated is a caller that never
+        // presents a token at all.
+        const { fencing_token: _dropped, ...withoutToken } = input;
+        return engine.transition({ ...withoutToken, channel: 'recovery' });
+      },
     }));
 
     expect(report.ok).toBe(false);

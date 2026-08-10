@@ -1,0 +1,21 @@
+{
+  // The main tsconfig compiles `src` and emits `dist`, so it cannot also include `test` —
+  // the tests would be emitted into the published output. This config typechecks them
+  // instead, with no emit.
+  //
+  // It exists because the tests are otherwise checked by nothing: the root tsconfig does not
+  // reference `services/**` (raised as a board request), and a test file that drifts from the
+  // interface it exercises still *runs*, it just stops proving what it claims to.
+  //
+  //   npx tsc -p services/workflow/tsconfig.test.json
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": ["node"],
+    // `incremental` is inherited from the base config, so tsc still writes a build-info file
+    // even under noEmit. Park it in the ignored dist directory rather than the package root.
+    "tsBuildInfoFile": "dist/.tsbuildinfo.test"
+  },
+  "include": ["src/**/*.ts", "test/**/*.ts"],
+  "exclude": ["dist", "node_modules"]
+}
