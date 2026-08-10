@@ -11,7 +11,7 @@ depends_on: W0
 gate: none
 gate_cleared: yes
 fake: no
-heartbeat: 2026-08-09 14:53
+heartbeat: 2026-08-09 18:24
 ```
 
 **Owns** — `services/cognition/**`, Postgres schema `cognition`
@@ -22,7 +22,7 @@ heartbeat: 2026-08-09 14:53
 
 ## Exit criteria
 
-- [ ] context builder: the seven sections, field allow-lists, size limits, data-class and provider policy, secret detectors, provenance labels
+- [x] context builder: the seven sections, field allow-lists, size limits, data-class and provider policy, secret detectors, provenance labels
 - [ ] the nine-step routing algorithm from the component doc
 - [ ] provider adapters exposing `generate_structured`, `stream_text`, `realtime_session`, `embed`, `cancel`
 - [ ] structured-output validation; budget reservation and reconciliation
