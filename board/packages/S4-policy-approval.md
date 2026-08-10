@@ -27,7 +27,7 @@ heartbeat: 2026-08-09 18:26
 - [x] deterministic evaluation over actor, action, resource, environment, data class, provenance, incident mode, cost, approval
 - [x] effective autonomy is the **minimum** across agent, repo, environment, data class, incident mode, and action type
 - [x] signed, versioned policy bundles; decisions reproducible from logged inputs plus bundle hash
-- [ ] approval records bound to actor, action, normalized parameter digest, resource, environment, expiry, `max_uses`
+- [x] approval records bound to actor, action, normalized parameter digest, resource, environment, expiry, `max_uses`
 - [ ] editing any bound field invalidates the approval
 - [ ] a consumed or expired approval cannot be replayed
 - [ ] unknown or unclassified input **denies**
