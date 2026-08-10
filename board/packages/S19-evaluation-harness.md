@@ -29,7 +29,7 @@ heartbeat: 2026-08-09 18:22
 - [x] canary exfiltration attempts through model, URL, DNS, tool parameter, artifact, log, screenshot, audio
 - [x] task-quality benchmark harness with frozen tasks and hidden tests
 - [x] cost and latency regression by pinned model/prompt version
-- [ ] every card's exit criteria are expressible in the harness and run in CI
+- [x] every card's exit criteria are expressible in the harness and run in CI
 - [ ] the harness **fails the build** on a safety regression rather than reporting it
 
 ## Log
