@@ -25,7 +25,7 @@ heartbeat: 2026-08-09 18:21
 
 - [x] the conformance runner and fake-parity driver from W0 made real
 - [x] fault-injection suite: process, worker, host, network, provider, token, storage, bad rollout
-- [ ] adversarial corpus: direct, indirect, encoded, and multimodal prompt injection
+- [x] adversarial corpus: direct, indirect, encoded, and multimodal prompt injection
 - [ ] canary exfiltration attempts through model, URL, DNS, tool parameter, artifact, log, screenshot, audio
 - [ ] task-quality benchmark harness with frozen tasks and hidden tests
 - [ ] cost and latency regression by pinned model/prompt version
