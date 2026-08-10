@@ -30,7 +30,7 @@ heartbeat: 2026-08-09 18:26
 - [x] approval records bound to actor, action, normalized parameter digest, resource, environment, expiry, `max_uses`
 - [x] editing any bound field invalidates the approval
 - [x] a consumed or expired approval cannot be replayed
-- [ ] unknown or unclassified input **denies**
+- [x] unknown or unclassified input **denies**
 - [ ] chat text, emoji, ticket labels, and model output never produce an approval record
 - [ ] fake and implementation both pass the shared conformance suite
 - [ ] `pnpm test` green offline with all peers faked
