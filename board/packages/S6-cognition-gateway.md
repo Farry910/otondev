@@ -32,7 +32,7 @@ heartbeat: 2026-08-09 18:25
 - [x] a fallback meets the same required capability and minimum eval floor
 - [x] budget exhaustion pauses rather than overruns; a model cannot approve its own increase
 - [ ] the S19 injection corpus runs green at the agreed threshold
-- [ ] the response contains **no authorization field of any kind**
+- [x] the response contains **no authorization field of any kind**
 - [ ] fake and implementation both pass the shared conformance suite
 - [ ] `pnpm test` green offline with all peers faked
 
