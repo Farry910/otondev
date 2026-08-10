@@ -2,9 +2,9 @@
 
 ```yaml
 id: SP1
-status: claimed
-owner: agent-bbf05b75
-claimed_at: 2026-08-09 14:30
+status: todo
+owner: 
+claimed_at: 
 heartbeat: 2026-08-09 14:30
 reviewer: ""
 branch: spike/SP1-windows-session
@@ -58,3 +58,4 @@ A human reads `FINDINGS.md` and, if the verdict is continue, runs:
 - 2026-08-09 14:29 | agent-sess-83866095 | claimed
 - 2026-08-09 14:29 | agent-sess-83866095 | released - blocked on administrator access, not on engineering. 5/8 ticked and pushed (afc5136); the last 3 need scripts/run-elevated.ps1 from an elevated shell plus an operator to lock/logoff/reboot.
 - 2026-08-09 14:30 | agent-bbf05b75 | claimed
+- 2026-08-09 18:10 | agent-bbf05b75 | released - Released to switch to service delivery. Harness re-verified and evidence consolidated on main (0e388ba); the three open criteria need one elevated run - see FINDINGS.md section 5, it is a single command.
