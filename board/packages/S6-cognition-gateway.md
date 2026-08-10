@@ -24,7 +24,7 @@ heartbeat: 2026-08-09 18:25
 
 - [x] context builder: the seven sections, field allow-lists, size limits, data-class and provider policy, secret detectors, provenance labels
 - [x] the nine-step routing algorithm from the component doc
-- [ ] provider adapters exposing `generate_structured`, `stream_text`, `realtime_session`, `embed`, `cancel`
+- [x] provider adapters exposing `generate_structured`, `stream_text`, `realtime_session`, `embed`, `cancel`
 - [ ] structured-output validation; budget reservation and reconciliation
 - [ ] privacy-aware audit record (no default full prompt/response retention)
 - [ ] a forbidden provider fails closed and never silently falls back to a weaker data policy
