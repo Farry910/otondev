@@ -2,7 +2,7 @@
 
 ```yaml
 id: S4
-status: claimed
+status: in-review
 owner: agent-bbf05b75
 claimed_at: 2026-08-09 18:10
 branch: svc/S4-policy
@@ -39,3 +39,4 @@ heartbeat: 2026-08-09 18:26
 
 <!-- newest last · `YYYY-MM-DD HH:MM | session | note` -->
 - 2026-08-09 18:10 | agent-bbf05b75 | claimed
+- 2026-08-09 18:29 | agent-bbf05b75 | in-review - exit criteria met
