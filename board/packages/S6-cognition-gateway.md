@@ -11,7 +11,7 @@ depends_on: W0
 gate: none
 gate_cleared: yes
 fake: no
-heartbeat: 2026-08-09 18:25
+heartbeat: 2026-08-09 18:26
 ```
 
 **Owns** — `services/cognition/**`, Postgres schema `cognition`
