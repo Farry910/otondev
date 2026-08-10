@@ -1,9 +1,11 @@
-{
+﻿{
   "files": [],
   "references": [
     { "path": "./packages/contracts" },
     { "path": "./packages/testkit" },
     { "path": "./packages/sdk" },
-    { "path": "./packages/example-consumer" }
+    { "path": "./packages/example-consumer" },
+    { "path": "./services/policy" }
   ]
 }
+

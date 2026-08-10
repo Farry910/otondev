@@ -110,6 +110,15 @@ importers:
         specifier: workspace:*
         version: link:../contracts
 
+  services/cognition:
+    dependencies:
+      '@otondev/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@otondev/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
+
   services/ingress:
     dependencies:
       '@otondev/contracts':
@@ -118,6 +127,22 @@ importers:
       '@otondev/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
+    devDependencies:
+      '@otondev/testkit':
+        specifier: workspace:*
+        version: link:../../packages/testkit
+
+  services/policy:
+    dependencies:
+      '@otondev/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@otondev/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
+      zod:
+        specifier: ^4.1.0
+        version: 4.4.3
     devDependencies:
       '@otondev/testkit':
         specifier: workspace:*
