@@ -2,15 +2,16 @@
 
 ```yaml
 id: S19
-status: todo
-owner: ""
-claimed_at: ""
+status: claimed
+owner: agent-sess-ec39663a
+claimed_at: 2026-08-09 18:09
 branch: svc/S19-eval
 stage: 1
 depends_on: W0
 gate: none
 gate_cleared: yes
 fake: n/a
+heartbeat: 2026-08-09 18:09
 ```
 
 **Owns** — `eval/**`
@@ -34,3 +35,4 @@ fake: n/a
 ## Log
 
 <!-- newest last · `YYYY-MM-DD HH:MM | session | note` -->
+- 2026-08-09 18:09 | agent-sess-ec39663a | claimed
