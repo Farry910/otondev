@@ -11,7 +11,7 @@ depends_on: W0
 gate: none
 gate_cleared: yes
 fake: n/a
-heartbeat: 2026-08-09 18:09
+heartbeat: 2026-08-09 18:21
 ```
 
 **Owns** — `eval/**`
@@ -23,7 +23,7 @@ heartbeat: 2026-08-09 18:09
 
 ## Exit criteria
 
-- [ ] the conformance runner and fake-parity driver from W0 made real
+- [x] the conformance runner and fake-parity driver from W0 made real
 - [ ] fault-injection suite: process, worker, host, network, provider, token, storage, bad rollout
 - [ ] adversarial corpus: direct, indirect, encoded, and multimodal prompt injection
 - [ ] canary exfiltration attempts through model, URL, DNS, tool parameter, artifact, log, screenshot, audio
