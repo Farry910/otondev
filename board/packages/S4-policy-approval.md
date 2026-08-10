@@ -31,7 +31,7 @@ heartbeat: 2026-08-09 18:26
 - [x] editing any bound field invalidates the approval
 - [x] a consumed or expired approval cannot be replayed
 - [x] unknown or unclassified input **denies**
-- [ ] chat text, emoji, ticket labels, and model output never produce an approval record
+- [x] chat text, emoji, ticket labels, and model output never produce an approval record
 - [ ] fake and implementation both pass the shared conformance suite
 - [ ] `pnpm test` green offline with all peers faked
 
