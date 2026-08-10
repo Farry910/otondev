@@ -2,15 +2,16 @@
 
 ```yaml
 id: S4
-status: todo
-owner: ""
-claimed_at: ""
+status: claimed
+owner: agent-bbf05b75
+claimed_at: 2026-08-09 18:10
 branch: svc/S4-policy
 stage: 1
 depends_on: W0
 gate: none
 gate_cleared: yes
 fake: no
+heartbeat: 2026-08-09 18:10
 ```
 
 **Owns** — `services/policy/**`, Postgres schema `policy`
@@ -37,3 +38,4 @@ fake: no
 ## Log
 
 <!-- newest last · `YYYY-MM-DD HH:MM | session | note` -->
+- 2026-08-09 18:10 | agent-bbf05b75 | claimed
