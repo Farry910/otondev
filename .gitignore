@@ -7,3 +7,9 @@ node_modules/
 dist/
 .env
 *.log
+
+# Session worktrees live here so the parent directory is not littered with sibling
+# checkouts. They are real git worktrees of this same repository — nested, which git
+# supports — so they must never be tracked by the checkout that contains them.
+# Also excluded from ESLint, or `eslint .` walks into another branch's source.
+.worktrees/

@@ -10,6 +10,10 @@ export default tseslint.config(
       '**/coverage/**',
       'packages/contracts/schemas/**',
       'scripts/fixtures/**',
+      // Session worktrees are checkouts of other branches nested inside this one.
+      // Without this, `eslint .` lints another branch's source and reports failures
+      // against code that is not in this checkout.
+      '.worktrees/**',
     ],
   },
   js.configs.recommended,

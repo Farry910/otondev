@@ -63,14 +63,20 @@ Sessions must not share a working directory — that is the one place they could
 claimed package gets its own git worktree:
 
 ```powershell
-git worktree add ../otondev-S7 -b svc/S7-connectors
+git worktree add .worktrees/S7 -b svc/S7-connectors
 ```
 
-The session works entirely inside `../otondev-S7` on branch `svc/S7-connectors` and runs board commands
+The session works entirely inside `.worktrees/S7` on branch `svc/S7-connectors` and runs board commands
 **from that same directory**. No session ever needs `main` checked out, and none needs to return to the
 primary worktree for anything.
 
-When the package is merged: `git worktree remove ../otondev-S7`.
+When the package is merged: `git worktree remove .worktrees/S7`.
+
+Worktrees live *under* the repository rather than beside it, so the parent directory does not
+accumulate one sibling checkout per card. `.worktrees/` is git-ignored and excluded from ESLint —
+both are required, because a nested worktree is a checkout of a different branch and every tool
+that walks the tree would otherwise read it as part of this one. A session that finishes without
+removing its worktree leaves a stale entry; `git worktree prune` clears it.
 
 ---
 

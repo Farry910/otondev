@@ -501,7 +501,7 @@ function Show-Claimed([string]$cardId, [string]$who, $row) {
         Write-Host ("why this one: stage $($row.Stage), frees $($row.Reach) card(s), $(if ($row.Contention) { "$($row.Contention) path overlap(s) with work in flight" } else { 'no path overlap with work in flight' })") -ForegroundColor DarkGray
     }
     Write-Host ""
-    Write-Host "  git worktree add ../otondev-$cardId -b $(Get-Field $card 'branch')" -ForegroundColor Cyan
+    Write-Host "  git worktree add .worktrees/$cardId -b $(Get-Field $card 'branch')" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "then read board/packages/$([System.IO.Path]::GetFileName($path)) and only the docs it links." -ForegroundColor DarkGray
 }

@@ -30,8 +30,9 @@ the moment anything frees up. Use it when you know a peer is about to land W0.
 
 ### Working a card
 
-1. `git worktree add ../otondev-<ID> -b <branch>` — the command prints the exact line. Work **only**
-   inside that worktree.
+1. `git worktree add .worktrees/<ID> -b <branch>` — the command prints the exact line. Work **only**
+   inside that worktree. Worktrees live under `.worktrees/` so the parent directory is not
+   littered with sibling checkouts; it is git-ignored and excluded from ESLint.
 2. Read `board/packages/<ID>-*.md` and **only** the documents it links. Do not read the whole design
    package; the card names what matters.
 3. Implement. Stay strictly inside the card's `Owns` paths.
@@ -48,7 +49,7 @@ the moment anything frees up. Use it when you know a peer is about to land W0.
    - run the tests again
    - `git push origin HEAD:main`
    - `board.ps1 finish <ID>`
-8. `git worktree remove ../otondev-<ID>`, then run `next` again and repeat.
+8. `git worktree remove .worktrees/<ID>`, then run `next` again and repeat.
 
 ### Landing work on `main`
 
