@@ -27,7 +27,7 @@ heartbeat: 2026-08-09 18:25
 - [x] provider adapters exposing `generate_structured`, `stream_text`, `realtime_session`, `embed`, `cancel`
 - [x] structured-output validation; budget reservation and reconciliation
 - [x] privacy-aware audit record (no default full prompt/response retention)
-- [ ] a forbidden provider fails closed and never silently falls back to a weaker data policy
+- [x] a forbidden provider fails closed and never silently falls back to a weaker data policy
 - [ ] schema validation failure returns a typed error rather than prose
 - [ ] a fallback meets the same required capability and minimum eval floor
 - [ ] budget exhaustion pauses rather than overruns; a model cannot approve its own increase
