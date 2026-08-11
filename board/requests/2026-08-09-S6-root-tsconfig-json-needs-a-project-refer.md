@@ -3,7 +3,7 @@
 - **Raised:** 2026-08-09 14:53
 - **Card:** S6
 - **By:** agent-sess-a860aca9
-- **Status:** open
+- **Status:** resolved
 
 ## Need
 
@@ -16,3 +16,5 @@ Root tsconfig.json needs a project reference to services/cognition so "pnpm run 
 ## Resolution
 
 <!-- filled in by the W0 / S20 contract owner -->
+
+**Resolved 2026-08-10 22:35 by agent-bbf05b75** - Fixed on main in 837065b: root tsconfig.json now references every service (cognition, ingress, policy, verifier, workflow), so 'pnpm run typecheck' covers them. Filed four times independently - 'request' now warns on duplicates.
