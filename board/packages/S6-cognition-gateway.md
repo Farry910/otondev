@@ -2,9 +2,9 @@
 
 ```yaml
 id: S6
-status: claimed
-owner: agent-sess-a860aca9
-claimed_at: 2026-08-09 14:48
+status: todo
+owner: 
+claimed_at: 
 branch: svc/S6-cognition
 stage: 1
 depends_on: W0
@@ -40,3 +40,4 @@ heartbeat: 2026-08-09 18:26
 
 <!-- newest last · `YYYY-MM-DD HH:MM | session | note` -->
 - 2026-08-09 14:48 | agent-sess-a860aca9 | claimed
+- 2026-08-10 22:34 | agent-bbf05b75 | reaped - owner agent-sess-a860aca9 last seen 2026-08-09 18:26, past the 120 min TTL
