@@ -2,10 +2,10 @@
 
 ```yaml
 id: SP3
-status: todo
+status: blocked
 owner: 
 claimed_at: 
-heartbeat: 2026-08-09 14:56
+heartbeat: 
 reviewer: ""
 branch: spike/SP3-ditto-behaviour
 stage: 0
@@ -15,6 +15,7 @@ gate_cleared: yes
 clears_gate: ditto-spike
 fake: n/a
 owns: spikes/ditto-behaviour/**
+blocked_on: needs DITTO_OFFLINE_LICENSE_TOKEN from portal.ditto.live. sync.start() is refused until activation, so criteria 2-6 cannot run. No agent can obtain the token.
 ```
 
 **Owns** — `spikes/ditto-behaviour/**`
@@ -58,3 +59,4 @@ owns: spikes/ditto-behaviour/**
 - 2026-08-09 14:47 | agent-sess-a860aca9 | released - Blocked on a Ditto offline licence token; released immediately rather than held idle. See board/requests/2026-08-09-SP3-*.md
 - 2026-08-09 14:56 | agent-sess-ec39663a | claimed
 - 2026-08-09 14:56 | agent-sess-ec39663a | released - Still blocked on DITTO_OFFLINE_LICENSE_TOKEN (3rd auto-claim). See board/requests/2026-08-09-SP3-sp3-needs-a-credential-no-agent-can-obta.md -- 'next' ranks this first among stage-0 and re-claims it after every release, so it will keep being handed out until it is gated or the token exists.
+- 2026-08-10 22:34 | agent-bbf05b75 | blocked - needs DITTO_OFFLINE_LICENSE_TOKEN from portal.ditto.live. sync.start() is refused until activation, so criteria 2-6 cannot run. No agent can obtain the token.
