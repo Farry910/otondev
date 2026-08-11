@@ -51,6 +51,22 @@ the moment anything frees up. Use it when you know a peer is about to land W0.
    - `board.ps1 finish <ID>`
 8. `git worktree remove .worktrees/<ID>`, then run `next` again and repeat.
 
+### When a card cannot be finished
+
+Two different situations, two different commands. Getting this wrong wastes every agent after you.
+
+- **You are stopping, but the work is doable** — out of context, changed priorities:
+  `board.ps1 release <ID> -Note "what is done, what is next"`. It goes back in the queue.
+- **Nobody can do it without a human** — a credential, licence token, administrator rights, a price
+  nobody publishes: `board.ps1 block <ID> -Note "exactly what a human must supply"`. `next` stops
+  offering it and reports it to the human.
+
+**Never `release` a card that is truly blocked.** `next` ranks Stage-0 work first, so a released spike
+comes straight back to the next agent, which then rediscovers the same blocker. SP3 went round that
+loop five times in 56 minutes before `block` existed.
+
+If you ticked a criterion you had not actually met, fix it: `board.ps1 uncheck <ID> -Note "<text>"`.
+
 ### Landing work on `main`
 
 Packages own disjoint paths, so merging to `main` should never conflict. **If the rebase does
@@ -78,10 +94,10 @@ merged. Finishing without pushing stalls every session waiting on you.
 
 ## Stop and ask the user when
 
-- `next` returns 3 and everything left is `gated`. Those need a human decision. Say **which gate**, and
-  say whether the card that produces its evidence (`SP1`–`SP5`) is done, in flight, or unclaimed —
-  `next` prints that link for you. If a producing spike is still unclaimed, that is work, not a gate:
-  run `next` again rather than stopping.
+- `next` returns 3 and everything left is `gated` or `blocked`. Those need a human. Report the exact
+  list `next` printed — for a gate, say whether the spike that produces its evidence (`SP1`–`SP5`) is
+  done, in flight, or unclaimed; for a blocked card, say what it needs supplied. If a producing spike
+  is still unclaimed, that is work, not a gate: run `next` again rather than stopping.
 - A rebase onto `main` conflicts.
 - The card's spec contradicts the design docs, or the work cannot be done as specified.
 
@@ -93,6 +109,7 @@ agent holds the card you wanted — that is the one case `next` is built to hand
 | Path | What |
 |---|---|
 | `doc/` | the design package — see `doc/README.md` for the tier map |
+| `doc/03-implementation/development-process.md` | **how work moves** — states, the five queues, who owns each, what is enforced |
 | `doc/03-implementation/implementation-plan.md` | package decomposition, §5 has every card's full brief |
 | `board/` | live delivery state; `board/README.md` is the full protocol |
 | `board/packages/` | one card per package — the unit of work |

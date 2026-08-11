@@ -47,6 +47,7 @@ sequence must not require touching an architecture document, and vice versa.
 | Document | Purpose |
 |---|---|
 | [Implementation plan](03-implementation/implementation-plan.md) | 21 independently buildable packages, the contract freeze, fake-parity rule, and the session protocol for parallel work |
+| [Development process](03-implementation/development-process.md) | How work moves: every state, the five queues and who owns each, the agent and human loops, and what is actually enforced versus convention |
 
 ### 04 — Delivery
 | Document | Purpose |

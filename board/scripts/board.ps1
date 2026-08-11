@@ -33,7 +33,8 @@
 param(
     [Parameter(Position = 0)]
     [ValidateSet('next', 'status', 'list', 'agents', 'claim', 'release', 'finish', 'approve',
-                 'review', 'fake', 'check', 'beat', 'reap', 'clear-gate', 'request')]
+                 'review', 'fake', 'check', 'uncheck', 'beat', 'reap', 'block', 'unblock',
+                 'clear-gate', 'request', 'requests', 'resolve')]
     [string]$Command = 'status',
 
     [Parameter(Position = 1)]
@@ -297,6 +298,7 @@ function Get-Rows {
             Gate       = Get-Field $c 'gate'
             GateOk     = ((Get-Field $c 'gate_cleared') -eq 'yes')
             ClearsGate = Get-Field $c 'clears_gate'
+            BlockedOn  = Get-Field $c 'blocked_on'
             Deps       = @((Get-Field $c 'depends_on') -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
             Stage      = [int](Get-Field $c 'stage')
             Roots      = Get-PathRoots $c
@@ -316,6 +318,7 @@ function Get-Rows {
     foreach ($r in $rows) { $byId[$r.Id] = $r }
 
     foreach ($r in $rows) {
+        if ($r.Status -eq 'blocked') { $r.State = 'blocked'; $r.Reason = $r.BlockedOn; continue }
         if ($r.Status -ne 'todo') { $r.State = $r.Status; continue }
         if (-not $r.GateOk) { $r.State = 'gated'; $r.Reason = $r.Gate; continue }
         $pending = @($r.Deps | Where-Object { -not $byId.ContainsKey($_) -or $byId[$_].Status -ne 'done' })
@@ -427,7 +430,7 @@ function Update-Status($rows) {
     [void]$sb.AppendLine()
     [void]$sb.AppendLine("_Generated $Stamp from origin/main by ``board.ps1 status``. Do not edit; git-ignored._")
     [void]$sb.AppendLine()
-    foreach ($s in @('claimed', 'in-review', 'available', 'waiting', 'gated', 'done')) {
+    foreach ($s in @('claimed', 'in-review', 'available', 'waiting', 'blocked', 'gated', 'done')) {
         [void]$sb.AppendLine("- **$s**: " + @($rows | Where-Object { $_.State -eq $s }).Count)
     }
     [void]$sb.AppendLine()
@@ -530,6 +533,50 @@ function Show-Ranking($cands) {
     }
 }
 
+# Return one stale claim to the pool. Shared by 'next' and 'reap' so both apply the identical rule:
+# only a claim silent past the TTL, never the caller's own, never on judgment.
+function Invoke-Reap($row) {
+    Write-Host ("{0} has had no sign of life for {1} (owner {2}); returning it to the pool" -f $row.Id, (Format-Age $row.Seen), $row.Owner) -ForegroundColor Yellow
+    try {
+        Invoke-BoardWrite -CardId $row.Id -Message "board: reap $($row.Id)" -Mutate {
+            param($c)
+            if ((Get-Field $c 'status') -ne 'claimed') { throw (New-Refusal 'no longer claimed') }
+            $hb = Get-Field $c 'heartbeat'; if (-not $hb) { $hb = Get-Field $c 'claimed_at' }
+            $o = Get-Field $c 'owner'
+            $c = Set-Field $c 'status' 'todo'
+            $c = Set-Field $c 'owner' ''
+            $c = Set-Field $c 'claimed_at' ''
+            return (Add-Log $c "$Stamp | $Me | reaped - owner $o last seen $hb, past the $StaleMinutes min TTL")
+        }
+    } catch {
+        if (-not (Test-Refusal $_)) { throw }   # someone else reaped or reclaimed it first; fine
+    }
+}
+
+# --- contract requests ------------------------------------------------------------------------------
+function Get-RequestRows {
+    $rows = @()
+    foreach ($p in @(Get-GitOut @('ls-tree', '--name-only', 'origin/main', 'board/requests/'))) {
+        if ($p -notlike '*.md' -or $p -like '*README.md') { continue }
+        $c = ((Get-GitOut @('show', "origin/main:$p")) -join "`n")
+        $status = 'open'
+        $m = [regex]::Match($c, '(?m)^\s*-\s\*\*Status:\*\*\s*(.+)$')
+        if ($m.Success) { $status = $m.Groups[1].Value.Trim() }
+        $need = ''
+        $n = [regex]::Match($c, '(?ms)^##\s*Need\s*$(.+?)^##')
+        if ($n.Success) { $need = ($n.Groups[1].Value.Trim() -split "`n")[0].Trim() }
+        $file = [System.IO.Path]::GetFileNameWithoutExtension($p)
+        $card = ''
+        $cm = [regex]::Match($file, '^\d{4}-\d{2}-\d{2}-([A-Za-z0-9]+)-')
+        if ($cm.Success) { $card = $cm.Groups[1].Value }
+        $rows += [pscustomobject]@{
+            File = $file; Path = $p; Card = $card; Status = $status; Need = $need
+            Date = ($file -replace '^(\d{4}-\d{2}-\d{2}).*', '$1')
+        }
+    }
+    return $rows
+}
+
 function Show-Blockers($rows) {
     $w = @($rows | Where-Object { $_.State -eq 'waiting' })
     $g = @($rows | Where-Object { $_.State -eq 'gated' })
@@ -538,6 +585,18 @@ function Show-Blockers($rows) {
     if ($c.Count) { Write-Host "  in flight: $(($c | ForEach-Object { "$($_.Id)($($_.Owner),$($_.Liveness))" }) -join ', ')" }
     if ($r.Count) { Write-Host "  in review: $(($r | ForEach-Object { "$($_.Id)($(if ($_.Reviewer) { $_.Reviewer } else { 'unassigned' }))" }) -join ', ')" }
     if ($w.Count) { Write-Host "  waiting on dependencies: $(($w | ForEach-Object { "$($_.Id)<-$($_.Reason)" }) -join ', ')" }
+
+    # Blocked cards are the ones a human must act on. Printed with the reason the discovering session
+    # recorded, so the human does not have to read a card log to find out what is actually needed.
+    $b = @($rows | Where-Object { $_.State -eq 'blocked' })
+    if ($b.Count) {
+        Write-Host "  blocked (needs a human to supply something):" -ForegroundColor Yellow
+        foreach ($card in $b) {
+            Write-Host ("    {0} - {1}" -f $card.Id, $(if ($card.Reason) { $card.Reason } else { 'no reason recorded' })) -ForegroundColor DarkGray
+        }
+        Write-Host "    unblock with: board.ps1 unblock <ID> -Note 'what changed'" -ForegroundColor DarkGray
+    }
+
     if ($g.Count) {
         Write-Host "  gated (needs a human decision): $(($g | ForEach-Object { "$($_.Id)<-$($_.Reason)" }) -join ', ')" -ForegroundColor Yellow
         $gates = @($g | ForEach-Object { $_.Reason } | Select-Object -Unique)
@@ -549,6 +608,13 @@ function Show-Blockers($rows) {
                 Write-Host "    '$gate' has no card that produces it; a human must run: board.ps1 clear-gate <ID> -Note '...'" -ForegroundColor DarkGray
             }
         }
+    }
+
+    # If an agent has run out of work, the open request queue is the other thing a human can act on.
+    # Only computed here, on the rare exhausted path - it costs one git call per request file.
+    $openReqs = @(Get-RequestRows | Where-Object { $_.Status -eq 'open' })
+    if ($openReqs.Count) {
+        Write-Host ("  {0} contract request(s) open and unresolved - see: board.ps1 requests" -f $openReqs.Count) -ForegroundColor Yellow
     }
 }
 
@@ -605,7 +671,19 @@ switch ($Command) {
                 exit 4
             }
 
-            # 3. Build work, best first, walking the WHOLE list. A card taken out from under us is not a
+            # 3. Return anything whose owner has gone silent past the TTL, BEFORE picking. Reaping used
+            #    to sit at the bottom of the ladder, which meant a stale claim was only collected when
+            #    the board was otherwise empty - so a card abandoned mid-flight sat claimed for days
+            #    while agents worked around it. Staleness is measured, so acting on it is not a guess.
+            if (-not $DryRun) {
+                $stale = @($rows | Where-Object { $_.State -eq 'claimed' -and $_.Liveness -eq 'stale' -and $_.Owner -ne $Me })
+                if ($stale.Count -gt 0) {
+                    foreach ($s in $stale) { Invoke-Reap $s }
+                    continue
+                }
+            }
+
+            # 4. Build work, best first, walking the WHOLE list. A card taken out from under us is not a
             #    reason to stop; it is a reason to take the next one.
             # @() is load-bearing: a function returning a one-element array has it unwrapped to a bare
             # object by PowerShell, and $obj.Count is then $null, so '-gt 0' is false. Without this the
@@ -650,31 +728,7 @@ switch ($Command) {
                 }
             }
 
-            # 5. Still nothing. Return claims whose owner has gone silent past the TTL - measured, not
-            #    guessed. Then loop, because reaping usually makes something available.
-            $stale = @($rows | Where-Object { $_.State -eq 'claimed' -and $_.Liveness -eq 'stale' -and $_.Owner -ne $Me })
-            if ($stale.Count -gt 0 -and -not $DryRun) {
-                foreach ($s in $stale) {
-                    Write-Host "$($s.Id) has had no sign of life for $(Format-Age $s.Seen) (owner $($s.Owner)); returning it to the pool" -ForegroundColor Yellow
-                    try {
-                        Invoke-BoardWrite -CardId $s.Id -Message "board: reap $($s.Id)" -Mutate {
-                            param($c)
-                            if ((Get-Field $c 'status') -ne 'claimed') { throw (New-Refusal 'no longer claimed') }
-                            $hb = Get-Field $c 'heartbeat'; if (-not $hb) { $hb = Get-Field $c 'claimed_at' }
-                            $o = Get-Field $c 'owner'
-                            $c = Set-Field $c 'status' 'todo'
-                            $c = Set-Field $c 'owner' ''
-                            $c = Set-Field $c 'claimed_at' ''
-                            return (Add-Log $c "$Stamp | $Me | reaped - owner $o last seen $hb, past the $StaleMinutes min TTL")
-                        }
-                    } catch {
-                        if (-not (Test-Refusal $_)) { throw }
-                    }
-                }
-                continue
-            }
-
-            # 6. Genuinely nothing this agent can do without a human.
+            # 5. Genuinely nothing this agent can do without a human.
             Write-Host 'nothing this agent can start right now.' -ForegroundColor Yellow
             Show-Blockers $rows
 
@@ -730,19 +784,7 @@ switch ($Command) {
             Show-Agents $rows
             exit 0
         }
-        foreach ($s in $stale) {
-            Invoke-BoardWrite -CardId $s.Id -Message "board: reap $($s.Id)" -Mutate {
-                param($c)
-                if ((Get-Field $c 'status') -ne 'claimed') { throw (New-Refusal 'no longer claimed') }
-                $hb = Get-Field $c 'heartbeat'; if (-not $hb) { $hb = Get-Field $c 'claimed_at' }
-                $o = Get-Field $c 'owner'
-                $c = Set-Field $c 'status' 'todo'
-                $c = Set-Field $c 'owner' ''
-                $c = Set-Field $c 'claimed_at' ''
-                return (Add-Log $c "$Stamp | $Me | reaped - owner $o last seen $hb, past the $StaleMinutes min TTL")
-            }
-            Write-Host "reaped $($s.Id) (owner $($s.Owner), last seen $(Format-Age $s.Seen))" -ForegroundColor Yellow
-        }
+        foreach ($s in $stale) { Invoke-Reap $s }
     }
 
     'release' {
@@ -759,9 +801,55 @@ switch ($Command) {
             $c = Set-Field $c 'status' 'todo'
             $c = Set-Field $c 'owner' ''
             $c = Set-Field $c 'claimed_at' ''
+            $c = Set-Field $c 'heartbeat' ''   # a released card has no owner, so it has no sign of life
             return (Add-Log $c "$Stamp | $o | released - $why")
         }
         Write-Host "released $Id" -ForegroundColor Yellow
+        Write-Host "if it is blocked on something only a human can supply, use 'block' instead - a plain" -ForegroundColor DarkGray
+        Write-Host "release puts it straight back at the front of the queue for the next agent." -ForegroundColor DarkGray
+    }
+
+    # 'block' is the state the board was missing. A card released for an ordinary reason should go back
+    # in the queue; a card that CANNOT progress until a human supplies something must not - or every
+    # agent in turn claims it, rediscovers the same blocker, and releases. That happened here: SP3 was
+    # claimed and released five times in 56 minutes, each session correctly concluding it needed a Ditto
+    # licence token no agent can obtain.
+    'block' {
+        if (-not $Note) { throw 'block requires -Note stating exactly what a human must supply' }
+        Invoke-BoardWrite -CardId $Id -Message "board: $Id blocked" -Mutate {
+            param($c)
+            $st = Get-Field $c 'status'
+            if ($st -notin @('todo', 'claimed')) {
+                throw (New-Refusal "$Id is '$st'; only a 'todo' or 'claimed' card can be blocked.")
+            }
+            $o = Get-Field $c 'owner'
+            if ($o -and $o -ne $Me -and -not $Force) {
+                throw (New-Refusal "$Id belongs to '$o', not you ($Me).")
+            }
+            $c = Set-Field $c 'status' 'blocked'
+            $c = Set-Field $c 'blocked_on' $Note
+            $c = Set-Field $c 'owner' ''
+            $c = Set-Field $c 'claimed_at' ''
+            $c = Set-Field $c 'heartbeat' ''
+            return (Add-Log $c "$Stamp | $Me | blocked - $Note")
+        }
+        Write-Host "$Id -> blocked" -ForegroundColor Yellow
+        Write-Host "'next' will not offer it again until a human runs: board.ps1 unblock $Id -Note '...'" -ForegroundColor DarkGray
+    }
+
+    'unblock' {
+        $why = if ($Note) { $Note } else { 'unblocked' }
+        Invoke-BoardWrite -CardId $Id -Message "board: $Id unblocked" -Mutate {
+            param($c)
+            if ((Get-Field $c 'status') -ne 'blocked') {
+                throw (New-Refusal "$Id is '$(Get-Field $c 'status')', not 'blocked'.")
+            }
+            $was = Get-Field $c 'blocked_on'
+            $c = Set-Field $c 'status' 'todo'
+            $c = Set-Field $c 'blocked_on' ''
+            return (Add-Log $c "$Stamp | $Me | unblocked - was '$was' - $why")
+        }
+        Write-Host "$Id -> todo (claimable again)" -ForegroundColor Green
     }
 
     'check' {
@@ -782,6 +870,27 @@ switch ($Command) {
             return (Set-Field $c 'heartbeat' $Stamp)
         }
         Write-Host "ticked on $Id" -ForegroundColor Green
+    }
+
+    # The checkboxes are what every other session trusts, so a tick made in error has to be correctable.
+    # Without this the only remedy was a note in the card log contradicting the checkbox - which happened
+    # on SP3, leaving the card claiming a criterion its own FINDINGS.md said was never tested.
+    'uncheck' {
+        if (-not $Note) { throw 'uncheck requires -Note with text from the criterion to untick' }
+        Invoke-BoardWrite -CardId $Id -Message "board: $Id criterion un-ticked" -Mutate {
+            param($c)
+            $lines = $c -split "`n"
+            $hit = -1
+            for ($i = 0; $i -lt $lines.Count; $i++) {
+                if ($lines[$i] -match '^\s*-\s\[x\]' -and
+                    $lines[$i].IndexOf($Note, [StringComparison]::OrdinalIgnoreCase) -ge 0) { $hit = $i; break }
+            }
+            if ($hit -lt 0) { throw (New-Refusal "no ticked criterion on $Id matching '$Note'") }
+            $lines[$hit] = $lines[$hit] -replace '\[x\]', '[ ]'
+            $c = ($lines -join "`n")
+            return (Add-Log $c "$Stamp | $Me | un-ticked a criterion matching '$Note' - it was not actually met")
+        }
+        Write-Host "un-ticked on $Id" -ForegroundColor Yellow
     }
 
     'finish' {
@@ -878,6 +987,24 @@ switch ($Command) {
         $path = "$base.md"; $n = 2
         while ($existing -contains $path) { $path = "$base-$n.md"; $n++ }
 
+        # Four sessions independently filed the same root-tsconfig request because nothing showed them
+        # it already existed. Surface likely duplicates - as a warning, never a refusal, since the
+        # filing session is mid-build and must not be stopped to adjudicate this.
+        $words = @($Note.ToLower() -split '[^a-z0-9]+' | Where-Object { $_.Length -gt 4 } | Select-Object -Unique)
+        if ($words.Count -gt 0) {
+            $near = @(Get-RequestRows | Where-Object { $_.Status -eq 'open' } | ForEach-Object {
+                $hay = ($_.File + ' ' + $_.Need).ToLower()
+                $hits = @($words | Where-Object { $hay -like "*$_*" }).Count
+                [pscustomobject]@{ Row = $_; Score = $hits / [double]$words.Count }
+            } | Where-Object { $_.Score -ge 0.5 } | Sort-Object -Property Score -Descending)
+            if ($near.Count -gt 0) {
+                Write-Host "similar request(s) already open - check before duplicating:" -ForegroundColor Yellow
+                foreach ($d in ($near | Select-Object -First 3)) {
+                    Write-Host ("  [{0:P0}] {1}" -f $d.Score, $d.Row.File) -ForegroundColor DarkGray
+                }
+            }
+        }
+
         Invoke-BoardWrite -Path $path -IsNewFile -Message "board: contract request from $Id" -Mutate {
             param($c)
             return @"
@@ -903,6 +1030,43 @@ $Note
         }
         Write-Host "raised $path" -ForegroundColor Green
         Write-Host 'do not block on this - record your assumption on the card and keep building' -ForegroundColor Cyan
+    }
+
+    # A request nobody can see is a request nobody resolves. 21 accumulated here unread, four of them
+    # the same root cause, because filing was the only verb the board had.
+    'requests' {
+        Sync-Remote
+        $reqs = @(Get-RequestRows)
+        $open = @($reqs | Where-Object { $_.Status -eq 'open' })
+        $done = @($reqs | Where-Object { $_.Status -ne 'open' })
+        Write-Host ""
+        Write-Host ("contract requests: {0} open, {1} resolved" -f $open.Count, $done.Count) -ForegroundColor Cyan
+        if ($open.Count -gt 0) {
+            $open | Sort-Object Date, Card | Format-Table -AutoSize `
+                @{L = 'RAISED'; E = { $_.Date } },
+                @{L = 'CARD'; E = { $_.Card } },
+                @{L = 'NEED'; E = { if ($_.Need.Length -gt 96) { $_.Need.Substring(0, 93) + '...' } else { $_.Need } } }
+            Write-Host "resolve one with: board.ps1 resolve <slug-fragment> -Note 'what changed'" -ForegroundColor DarkGray
+            Write-Host ""
+        }
+    }
+
+    'resolve' {
+        if (-not $Id)   { throw 'resolve requires a fragment of the request filename, e.g. root-tsconfig' }
+        if (-not $Note) { throw 'resolve requires -Note describing what changed' }
+        Sync-Remote
+        $hit = @(Get-RequestRows | Where-Object { $_.File -like "*$Id*" -and $_.Status -eq 'open' })
+        if ($hit.Count -eq 0) { throw (New-Refusal "no open request matching '$Id'") }
+        if ($hit.Count -gt 1) {
+            throw (New-Refusal ("'{0}' matches {1} open requests: {2}" -f $Id, $hit.Count, (($hit | ForEach-Object { $_.File }) -join ', ')))
+        }
+        $target = $hit[0]
+        Invoke-BoardWrite -Path $target.Path -Message "board: resolve request $($target.File)" -Mutate {
+            param($c)
+            $c = [regex]::Replace($c, '(?m)^(\s*-\s\*\*Status:\*\*\s*).*$', "`${1}resolved")
+            return ($c.TrimEnd() + "`n`n**Resolved $Stamp by $Me** - $Note`n")
+        }
+        Write-Host "resolved $($target.File)" -ForegroundColor Green
     }
 }
 

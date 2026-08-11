@@ -95,6 +95,7 @@ todo ──claim──> claimed ──finish──> done                    (ord
 |---|---|
 | `todo` | not started |
 | `claimed` | a session owns it; nobody else touches it or its paths |
+| `blocked` | cannot progress until a **human supplies something**; `next` will not offer it |
 | `in-review` | exit criteria met, awaiting independent review |
 | `done` | merged to `main` |
 
@@ -243,7 +244,12 @@ Ranked, in order — `next -DryRun` prints the whole ranking and claims nothing:
 | `agents` | who is working on what, how long, and how recently they were seen |
 | `status` / `list` | fetch and show the board (`status` also regenerates `STATUS.md`) |
 | `beat <ID>` | "still alive" — protects your claim from `reap` |
+| `block <ID> -Note "<what a human must supply>"` | → `blocked`; `next` stops offering it |
+| `unblock <ID> -Note "<what changed>"` | → `todo`; **human only** |
 | `check <ID> -Note "<text>"` | tick the first unchecked exit criterion containing `<text>` (literal match) |
+| `uncheck <ID> -Note "<text>"` | un-tick a criterion ticked in error |
+| `requests` | the open contract-request queue |
+| `resolve <fragment> -Note "<what changed>"` | close a contract request |
 | `fake <ID>` | mark your fake published so downstream sessions can depend on it |
 | `finish <ID>` | → `done`, or `in-review` for S4/S5/S10; refuses while criteria are unticked |
 | `review <ID>` | take the independent review on an `in-review` card |
