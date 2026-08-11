@@ -601,9 +601,16 @@ function Show-Blockers($rows) {
         Write-Host "  gated (needs a human decision): $(($g | ForEach-Object { "$($_.Id)<-$($_.Reason)" }) -join ', ')" -ForegroundColor Yellow
         $gates = @($g | ForEach-Object { $_.Reason } | Select-Object -Unique)
         foreach ($gate in $gates) {
-            $producer = @($rows | Where-Object { $_.ClearsGate -eq $gate })
-            if ($producer.Count -and @($producer | Where-Object { $_.Status -ne 'done' }).Count) {
-                Write-Host "    '$gate' is produced by $(($producer | ForEach-Object { $_.Id }) -join ',') - that card is the way to clear it" -ForegroundColor DarkGray
+            $producer  = @($rows | Where-Object { $_.ClearsGate -eq $gate })
+            $ready     = @($producer | Where-Object { $_.Status -eq 'done' })
+            $pending   = @($producer | Where-Object { $_.Status -ne 'done' })
+            if ($ready.Count) {
+                # The evidence already exists. This is the highest-value thing a human can do: the
+                # finding is written and the only thing between it and unblocked work is a read.
+                Write-Host ("    '{0}': {1} is DONE - the evidence is written. Read its FINDINGS.md, then: board.ps1 clear-gate {2} -Note '...'" -f `
+                    $gate, (($ready | ForEach-Object { $_.Id }) -join ','), (($g | Where-Object { $_.Reason -eq $gate } | ForEach-Object { $_.Id }) -join ' ')) -ForegroundColor Green
+            } elseif ($pending.Count) {
+                Write-Host "    '$gate' is produced by $(($pending | ForEach-Object { $_.Id }) -join ',') - that card is the way to clear it" -ForegroundColor DarkGray
             } else {
                 Write-Host "    '$gate' has no card that produces it; a human must run: board.ps1 clear-gate <ID> -Note '...'" -ForegroundColor DarkGray
             }
