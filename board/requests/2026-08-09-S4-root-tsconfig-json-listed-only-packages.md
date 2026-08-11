@@ -3,7 +3,7 @@
 - **Raised:** 2026-08-09 18:25
 - **Card:** S4
 - **By:** agent-f88c0410
-- **Status:** open
+- **Status:** resolved
 
 ## Need
 
@@ -16,3 +16,5 @@ Root tsconfig.json listed only packages/*, so services/policy was not typechecke
 ## Resolution
 
 <!-- filled in by the W0 / S20 contract owner -->
+
+**Resolved 2026-08-10 22:35 by agent-bbf05b75** - Fixed on main in 837065b: root tsconfig.json now references every service (cognition, ingress, policy, verifier, workflow), so 'pnpm run typecheck' covers them. Filed four times independently - 'request' now warns on duplicates.
